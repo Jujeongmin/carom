@@ -20,6 +20,7 @@ PORTAL = SRC / "exec-dad6e977-f7eb-4468-8d3d-ace5c7f515c7.png"
 DEADLINE_LOGO = SRC / "exec-99675094-3011-4aa2-b16e-ee38ac5c7c49.png"
 CAROM_LOGO = SRC / "exec-acdee6d9-b30b-4f42-b588-a7365bb71345.png"
 CAROM_COVER = SRC / "exec-704c4fdd-926f-4610-b490-8b289ce80175.png"
+CAROM_COIN = SRC / "exec-67f16c7c-4844-46e5-8d50-1fe6e2c72b0d.png"
 
 
 def alpha_fit(cell: Image.Image, size: tuple[int, int], pad: int) -> Image.Image:
@@ -77,6 +78,8 @@ save_sheet(ICONS, 4, 2, [
     ("icon_ad.png", (64, 64), 3), ("icon_vx.png", (64, 64), 3),
     ("icon_settings.png", (64, 64), 3), ("icon_rank.png", (64, 64), 3),
 ])
+# Replace the retired star coin with the CAROM billiard-ball motif.
+alpha_fit(Image.open(CAROM_COIN), (64, 64), 2).save(OUT / "icon_coin.png", optimize=True)
 
 # Preserve previous titles while promoting the document-requested CAROM logo.
 alpha_fit(Image.open(LOGO), (1024, 512), 20).save(OUT / "logo_title_pushwave.png", optimize=True)

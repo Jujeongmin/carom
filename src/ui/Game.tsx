@@ -7,6 +7,8 @@ import { CONTINUE_SECONDS, continueCost } from '../shop'
 import { ADS_ENABLED } from '../features'
 import { PLACEMENT } from '../net/ads'
 import { useAdReward } from '../hooks/useAdReward'
+import Tutorial from './Tutorial'
+import { markTutorialSeen, tutorialSeen } from '../tutorial'
 
 /** 모디파이어는 규칙이 아니라 이번 판의 조건 변화라 짧게만 알린다. */
 const MODIFIER_LABEL: Record<ModifierId, string> = {
@@ -57,7 +59,15 @@ export default function Game({
   skin,
 }: Props) {
   const runOptions = useMemo<RunOptions>(() => ({ extraSeconds: 0 }), [])
-  const { canvasRef, hud, retry, nextStage, revive } = useGameLoop(runOptions, startStage, skin)
+
+  // 첫 판에서 한 번만. 다시 볼 필요가 없는 것을 매 재시도마다 띄우면 방해가 된다.
+  const [tutorial, setTutorial] = useState(() => startStage === 1 && !tutorialSeen())
+  const { canvasRef, hud, retry, nextStage, revive } = useGameLoop(
+    runOptions,
+    startStage,
+    skin,
+    tutorial,
+  )
   const ad = useAdReward()
 
   // 광고는 보상이 실제로 확인됐을 때만 반영한다. 중간에 닫으면 아무 일도 일어나지 않는다.
@@ -115,7 +125,16 @@ export default function Game({
         </div>
       </div>
 
-      {hud.phase === 'playing' && !hud.aiming && (
+      {tutorial && (
+        <Tutorial
+          onClose={() => {
+            markTutorialSeen()
+            setTutorial(false)
+          }}
+        />
+      )}
+
+      {hud.phase === 'playing' && !hud.aiming && !tutorial && (
         <div className="hint">
           {hud.modifier === 'noSlow'
             ? '이번 판은 안 느려짐 · 반대로 당겼다 떼면 발사'
@@ -123,13 +142,28 @@ export default function Game({
         </div>
       )}
 
+      {/* 첫 판 내내 색 규칙을 옆에 붙여둔다. 카드를 닫는 순간 잊어버리기 때문이다. */}
+      {hud.stage === 1 && hud.phase === 'playing' && !tutorial && (
+        <div className="tut-legend inplay">
+          <span>
+            <i style={{ background: '#4de1ff' }} />
+            빗나감
+          </span>
+          <span>
+            <i style={{ background: '#ffc94d' }} />
+            부순다
+          </span>
+          <span>
+            <i style={{ background: '#ff4d5e' }} />
+            실패
+          </span>
+        </div>
+      )}
+
       {cleared && (
         <div className="overlay">
           <h1 className="ok">STAGE CLEAR</h1>
-          <p className="meta">
-            {hud.timeLeft.toFixed(1)}초 남김 · 샷 {hud.shotsUsed}회 · 최고 연쇄 {hud.bestChain}
-            {noAds && ' · 코인 2배 적용'}
-          </p>
+          {noAds && <p className="meta">코인 2배 적용</p>}
           <div className="buttons">
             {ADS_ENABLED && !noAds && !ad.hidden && (
               <button

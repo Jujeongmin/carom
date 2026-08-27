@@ -67,18 +67,32 @@
 .coins {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 0.36em;
   font-family: var(--font-display);
   font-size: 15px;
   font-weight: 700;
   color: var(--gold);
   font-variant-numeric: tabular-nums;
+  /*
+    Orbitron 숫자는 어센더만 있고 디센더가 없어서(15px에서 11/0) 라인박스 안에서 위로 쏠린다.
+    line-height를 1로 고정하면 숫자의 잉크 상자와 라인박스가 같아지고,
+    그때부터 align-items: center가 아이콘을 숫자 한가운데 맞춘다. 눈대중 보정이 필요 없다.
+  */
+  line-height: 1;
 }
 
-/* ◎ 문자 대신 만들어둔 아이콘을 쓴다. 이미 있는데 안 쓰이고 있었다. */
+/*
+  ◎ 문자 대신 만들어둔 아이콘을 쓴다. 이미 있는데 안 쓰이고 있었다.
+
+  em으로 잡아 글자 크기를 따라가게 한다 — 타이틀·상점·가격 버튼이 같은 컴포넌트를 쓰는데
+  px로 박아두면 글자가 큰 곳에서만 아이콘이 작아진다.
+
+  1.25em인 이유: 동그란 아이콘은 같은 높이의 사각형 글자보다 작아 보인다.
+  숫자 높이(0.73em)에 맞추면 눈에는 덜 커 보이므로 조금 키워 광학적으로 맞춘다.
+*/
 .coin-icon {
-  width: 15px;
-  height: 15px;
+  width: 1.25em;
+  height: 1.25em;
   object-fit: contain;
   filter: drop-shadow(0 0 5px rgba(255, 201, 77, 0.5));
 }
@@ -565,4 +579,106 @@ button.menu:active {
   color: var(--red);
   text-align: center;
   max-width: min(280px, 70vw);
+}
+
+/* ─────────────── 튜토리얼 ─────────────── */
+
+/* 첫 판 안내는 게임 위에 떠야 하므로 상점/랭킹보다 위로 올린다. */
+.tutorial-wrap {
+  z-index: 20;
+}
+
+.tutorial {
+  gap: 14px;
+}
+
+.tut-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: tut;
+}
+
+.tut-steps li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-left: 30px;
+  counter-increment: tut;
+}
+
+.tut-steps li::before {
+  content: counter(tut);
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(77, 225, 255, 0.16);
+  border: 1px solid rgba(77, 225, 255, 0.4);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  color: #4de1ff;
+}
+
+.tut-steps strong {
+  font-size: 14px;
+  color: #e8ecf5;
+}
+
+.tut-steps span {
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(232, 236, 245, 0.6);
+}
+
+/* 색 규칙. 설명과 실제 조준선 색이 같아야 하므로 값은 PALETTE에서 넘어온다. */
+.tut-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 14px;
+  padding: 10px 8px;
+  border-radius: 10px;
+  background: rgba(232, 236, 245, 0.05);
+}
+
+.tut-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: rgba(232, 236, 245, 0.75);
+}
+
+.tut-legend i {
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+/*
+  판 안에서는 HUD를 가리지 않게 아래쪽에 얇게 깐다.
+  조작 힌트(.hint)가 이미 화면 맨 아래에 있으므로 그 위로 올린다 —
+  같은 자리에 두면 두 글자가 겹쳐서 둘 다 못 읽는다.
+*/
+.tut-legend.inplay {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(48px + env(safe-area-inset-bottom));
+  padding: 7px 12px;
+  background: rgba(5, 7, 15, 0.62);
+  backdrop-filter: blur(2px);
+  pointer-events: none;
 }

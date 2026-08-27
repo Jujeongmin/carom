@@ -57,6 +57,9 @@ export function useWallet(): WalletApi {
   // 마이그레이션은 계정당 서버가 한 번만 받아주지만, 재연결마다 요청을 던질 이유는 없다.
   const migrated = useRef(false)
 
+  /** 이 세션에서 지갑을 실제로 바꿨는가. 로컬 저장을 언제 할지 정하는 데 쓴다. */
+  const dirty = useRef(false)
+
   const call = useCallback(
     async (fn: string, args: unknown[]): Promise<unknown | null> => {
       if (!remote) return null
@@ -122,6 +125,7 @@ export function useWallet(): WalletApi {
         void call('recordClear', [stage, coins]).then(applyServerWallet)
         return
       }
+      dirty.current = true
       setWallet((w) => toWallet(recordClearLocal(w, stage, coins), w.coinBoost, w.noAds))
     },
     [online, call, applyServerWallet],
@@ -140,6 +144,7 @@ export function useWallet(): WalletApi {
       }
       const next = spendCoinsLocal(wallet, amount)
       if (!next) return false
+      dirty.current = true
       setWallet(toWallet(next, wallet.coinBoost, wallet.noAds))
       return true
     },
@@ -155,7 +160,9 @@ export function useWallet(): WalletApi {
         return
       }
       const next = buySkinLocal(wallet, id, price)
-      if (next) setWallet(toWallet(next, wallet.coinBoost, wallet.noAds))
+      if (!next) return
+      dirty.current = true
+      setWallet(toWallet(next, wallet.coinBoost, wallet.noAds))
     },
     [online, call, applyServerWallet, wallet],
   )
@@ -171,14 +178,20 @@ export function useWallet(): WalletApi {
         })
         return
       }
+      dirty.current = true
       setWallet((w) => toWallet(equipSkinLocal(w, id), w.coinBoost, w.noAds))
     },
     [online, call, applyServerWallet],
   )
 
   // 오프라인일 때만 로컬에 남긴다. 온라인이면 서버가 이미 갖고 있다.
+  //
+  // dirty를 두는 이유: 연결이 붙기 전 한 프레임 동안은 online이 false다.
+  // 그때 초기 상태를 그대로 저장하면, 서버가 답하기도 전에 로컬 백업이
+  // 빈 지갑으로 덮인다 — 다음에 오프라인이 되면 진행이 사라진 것처럼 보인다.
+  // 실제로 무언가를 바꿨을 때만 쓴다.
   useEffect(() => {
-    if (!online) saveProgress(wallet)
+    if (!online && dirty.current) saveProgress(wallet)
   }, [online, wallet])
 
   return { wallet, online, recordClear, spend, buySkin, equipSkin, applyServerWallet, refresh }

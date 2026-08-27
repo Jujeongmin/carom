@@ -34,8 +34,10 @@ async function call<T>(server: RemoteServer, fn: string, args: unknown[], fallba
   }
 }
 
-export function submitProgress(server: RemoteServer, stage: number, nickname: string) {
-  return call(server, 'submitProgress', [stage, nickname], null)
+export async function submitProgress(server: RemoteServer, stage: number, nickname: string) {
+  const res = await call<unknown>(server, 'submitProgress', [stage, nickname], null)
+  if (import.meta.env.DEV) console.log('[leaderboard] submitProgress →', res)
+  return res
 }
 
 export function fetchTop(server: RemoteServer) {

@@ -25,14 +25,14 @@ export default function Title({ progress, onStart, onOpenRanking, onOpenShop }: 
         </div>
         <Coin amount={progress.coins} />
 
+        {/*
+          한 판이라도 깼으면 시작 버튼은 하나다.
+          순위가 최고 도달 스테이지라 1스테이지로 되돌아갈 이유가 없고,
+          "처음부터"를 남겨두면 눌러서 얻을 것이 없는 선택지를 계속 보여주게 된다.
+        */}
         <div className="title-buttons">
-          {hasProgress && (
-            <button className="primary" onClick={() => onStart(progress.reached)}>
-              이어하기 · STAGE {progress.reached}
-            </button>
-          )}
-          <button className={hasProgress ? 'ghost' : 'primary'} onClick={() => onStart(1)}>
-            {hasProgress ? '처음부터' : '시작'}
+          <button className="primary" onClick={() => onStart(hasProgress ? progress.reached : 1)}>
+            {hasProgress ? `STAGE ${progress.reached} 이어하기` : '시작'}
           </button>
           <button className="menu" onClick={onOpenShop}>
             <img src="/assets/icon_vx.webp" alt="" />

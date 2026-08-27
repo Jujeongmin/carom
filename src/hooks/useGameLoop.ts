@@ -37,7 +37,16 @@ export interface Hud {
 
 const HUD_INTERVAL_MS = 60
 
-export function useGameLoop(opts: RunOptions, startStage = 1, skin: SpriteName = 'char_base') {
+/**
+ * @param pausedExternally 튜토리얼처럼 화면이 덮였을 때 제한 시간까지 멈춘다.
+ *   읽는 동안 시간이 깎이면 설명이 벌칙이 된다.
+ */
+export function useGameLoop(
+  opts: RunOptions,
+  startStage = 1,
+  skin: SpriteName = 'char_base',
+  pausedExternally = false,
+) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const stateRef = useRef<GameState | null>(null)
   const inputsRef = useRef<Input[]>([])
@@ -48,6 +57,9 @@ export function useGameLoop(opts: RunOptions, startStage = 1, skin: SpriteName =
   // 스킨은 판 도중에도 바뀔 수 있으므로 ref로 읽는다. 루프를 다시 만들 이유가 없다.
   const skinRef = useRef(skin)
   skinRef.current = skin
+  // ref로 읽는다. 값이 바뀔 때마다 루프를 다시 만들면 진행 중인 판이 초기화된다.
+  const pausedRef = useRef(pausedExternally)
+  pausedRef.current = pausedExternally
 
   const [hud, setHud] = useState<Hud>({
     stage: 1,
@@ -120,6 +132,11 @@ export function useGameLoop(opts: RunOptions, startStage = 1, skin: SpriteName =
       stateRef.current = createStage(index, (index * 2654435761) ^ 0x5f3a, optsRef.current)
     }
 
+    // 첫 프레임이 돌기 전에 HUD를 한 번 채운다.
+    // 튜토리얼처럼 멈춘 채로 시작하면 루프가 갱신해주지 않아
+    // "0.0s · 타깃 0/0"이 그대로 보인다 — 시작도 안 했는데 시간이 다 된 것처럼 읽힌다.
+    setHud(readHud(stateRef.current, null))
+
     void loadAllAssets()
 
     let vp = computeViewport(canvas.clientWidth, canvas.clientHeight)
@@ -179,8 +196,10 @@ export function useGameLoop(opts: RunOptions, startStage = 1, skin: SpriteName =
 
       acc += Math.min(now - last, 250) / 1000
       last = now
-      if (paused) {
+      if (paused || pausedRef.current) {
+        // 멈춘 동안 쌓인 시간을 버린다. 남겨두면 재개하는 순간 몰아서 흘러간다.
         acc = 0
+        draw(ctx, s, vp, null, effects, skinRef.current)
         return
       }
 

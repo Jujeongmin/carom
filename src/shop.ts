@@ -1,4 +1,5 @@
 import type { SpriteName } from './game/assets'
+import type { StringKey } from './i18n'
 
 /**
  * 코인 상점.
@@ -28,10 +29,12 @@ import type { SpriteName } from './game/assets'
 
 export interface Skin {
   id: string
+  /** 고유명이라 번역하지 않는다. 에셋·로고와 같은 표기로 남는다. */
   name: string
   sprite: SpriteName
   price: number
-  note: string
+  /** 설명 문구의 번역 키 */
+  noteKey: StringKey
 }
 
 export const SKINS: Skin[] = [
@@ -40,21 +43,21 @@ export const SKINS: Skin[] = [
     name: 'STANDARD',
     sprite: 'char_base',
     price: 0,
-    note: '기본 외형',
+    noteKey: 'skin.base.note',
   },
   {
     id: 'pulse',
     name: 'PULSE',
     sprite: 'char_skin_pulse',
     price: 80,
-    note: '외형만 바뀜 · 바이올렛',
+    noteKey: 'skin.pulse.note',
   },
   {
     id: 'ember',
     name: 'EMBER',
     sprite: 'char_skin_ember',
     price: 300,
-    note: '외형만 바뀜 · 앰버',
+    noteKey: 'skin.ember.note',
   },
 ]
 
@@ -108,8 +111,8 @@ export interface VxProduct {
   productId: string
   /** 대시보드가 이름을 못 주는 동안 쓸 이름 */
   fallbackName: string
-  /** 무엇을 받는지 한 줄 */
-  grants: string
+  /** 무엇을 받는지 한 줄 (번역 키) */
+  grantsKey: StringKey
   /**
    * 대시보드 imageUrl이 오기 전/실패했을 때 쓸 로컬 썸네일 (public/assets 파일명).
    * 캔버스 스프라이트가 아니라 DOM img이므로 SpriteName이 아니다.
@@ -123,7 +126,7 @@ export const VX_PRODUCTS: VxProduct[] = [
   {
     productId: NO_ADS_PRODUCT_ID,
     fallbackName: 'NO ADS',
-    grants: '광고 제거 · 모든 클리어 코인 2배 (영구)',
+    grantsKey: 'vx.noAds.grants',
     image: 'icon_ad',
   },
 ]

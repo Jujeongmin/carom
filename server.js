@@ -122,12 +122,6 @@ class Server {
 
       if (!higher && !renamed) return { updated: false, entry: existing }
 
-      // updateCollectionItem은 인자가 **두 개**다: (collectionId, item).
-      // item 안의 __id로 대상을 찾는다. (collectionId, itemId, patch)로 부르면
-      // 세 번째 인자가 그냥 무시되고 아무것도 저장되지 않는다 —
-      // 그렇게 두었더니 계정마다 첫 기록에서 랭킹이 멈춰 있었다.
-      // 스테이지 2를 깨도 목록은 STAGE 1 그대로였고, 개명도 먹지 않았다.
-      //
       // 이름만 바뀐 경우 updatedAt은 그대로 둔다.
       // 동점 정렬이 "먼저 도달한 순"이므로 개명이 순위를 떨어뜨리면 안 된다.
       const next = {
@@ -137,12 +131,14 @@ class Server {
         stage: higher ? s : existing.stage,
         updatedAt: higher ? Date.now() : existing.updatedAt,
       }
-      await $global.updateCollectionItem('rankings', next)
 
-      // 낙관적으로 돌려주지 않는다. 정말 저장됐는지 다시 읽어서 그 값을 준다 —
-      // 저장에 실패했는데 updated: true를 돌려주는 것이 이 버그를 오래 숨겼다.
+      const via = await this._writeRow(next)
+
+      // 낙관적으로 돌려주지 않는다. 정말 저장됐는지 다시 읽어서 그 값을 준다.
+      // 저장에 실패했는데 updated: true를 돌려준 것이 이 버그를 오래 숨겼다.
       const saved = await this._myProgress()
-      return { updated: saved?.stage === next.stage && saved?.nickname === name, entry: saved }
+      const ok = saved?.stage === next.stage && saved?.nickname === name
+      return { updated: ok, via, entry: saved }
     }
 
     const entry = await $global.addCollectionItem('rankings', {
@@ -359,6 +355,51 @@ class Server {
       throw new Error('Invalid stage.')
     }
     return Math.floor(stage)
+  }
+
+  /**
+   * 기존 랭킹 행을 덮어쓴다.
+   *
+   * 어느 API가 실제로 저장되는지 이 환경에서 확인할 방법이 배포뿐이라
+   * 세 경로를 순서대로 시도하고, **쓴 뒤 다시 읽어서** 먹었는지 확인한다.
+   * 어느 쪽이 통했는지 이름으로 돌려주므로, 확인되면 나머지를 지우면 된다.
+   *
+   * 실제로 겪은 것: updateCollectionItem은 3인자로 불러도, 문서대로 2인자로 불러도
+   * 예외 없이 조용히 아무것도 저장하지 않았다. 그래서 계정마다 첫 기록에서
+   * 랭킹이 멈춰 있었다. 조용한 실패는 재확인 없이는 못 잡는다.
+   */
+  async _writeRow(next) {
+    const stuck = async () => {
+      const now = await this._myProgress()
+      return !(now?.stage === next.stage && now?.nickname === next.nickname)
+    }
+
+    try {
+      await $global.updateCollectionItem('rankings', next)
+      if (!(await stuck())) return 'update'
+    } catch (e) {
+      console.warn('updateCollectionItem failed:', e?.message)
+    }
+
+    // 문서: addCollectionItem에 이미 있는 __id를 주면 기존 항목에 필드가 병합된다.
+    try {
+      await $global.addCollectionItem('rankings', next)
+      if (!(await stuck())) return 'add-merge'
+    } catch (e) {
+      console.warn('addCollectionItem merge failed:', e?.message)
+    }
+
+    // 마지막 수단. 지웠다 다시 넣는다 — __id는 새로 받되 내용은 그대로다.
+    try {
+      await $global.deleteCollectionItem('rankings', next.__id)
+      const { __id, ...row } = next
+      await $global.addCollectionItem('rankings', row)
+      if (!(await stuck())) return 'delete-add'
+    } catch (e) {
+      console.warn('delete+add failed:', e?.message)
+    }
+
+    return 'none'
   }
 
   _validNick(nickname) {

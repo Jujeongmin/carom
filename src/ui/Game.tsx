@@ -9,22 +9,24 @@ import { PLACEMENT } from '../net/ads'
 import { useAdReward } from '../hooks/useAdReward'
 import Tutorial from './Tutorial'
 import { markTutorialSeen, tutorialSeen } from '../tutorial'
+import { t, useLang } from '../i18n'
+import type { StringKey } from '../i18n'
 
 /** 모디파이어는 규칙이 아니라 이번 판의 조건 변화라 짧게만 알린다. */
-const MODIFIER_LABEL: Record<ModifierId, string> = {
-  none: '',
-  swift: '공이 빠름',
-  shortLine: '조준선 짧음',
-  tightTime: '시간 촉박',
-  noSlow: '조준해도 안 느려짐',
+const MODIFIER_KEY: Record<ModifierId, StringKey | null> = {
+  none: null,
+  swift: 'mod.swift',
+  shortLine: 'mod.shortLine',
+  tightTime: 'mod.tightTime',
+  noSlow: 'mod.noSlow',
 }
 
 /** 조건은 규칙이 아니라 "지금 지켜야 할 것"으로 읽혀야 하므로 명령형으로 쓴다. */
-const OBJECTIVE_LABEL: Record<Objective, string> = {
-  destroyAll: '',
-  noNeutral: '회색 공에 닿으면 실패',
-  bankShot: '직접 못 부숨 · 한 번 튕겨서',
-  inOrder: '번호 순서대로만',
+const OBJECTIVE_KEY: Record<Objective, StringKey | null> = {
+  destroyAll: null,
+  noNeutral: 'obj.noNeutral',
+  bankShot: 'obj.bankShot',
+  inOrder: 'obj.inOrder',
 }
 
 interface Props {
@@ -58,6 +60,7 @@ export default function Game({
   noAds,
   skin,
 }: Props) {
+  useLang()
   const runOptions = useMemo<RunOptions>(() => ({ extraSeconds: 0 }), [])
 
   // 첫 판에서 한 번만. 다시 볼 필요가 없는 것을 매 재시도마다 띄우면 방해가 된다.
@@ -110,17 +113,17 @@ export default function Game({
           <Coin amount={hud.coins} />
         </div>
         <div className="badges">
-          {hud.objective !== 'destroyAll' && (
-            <span className="objective">{OBJECTIVE_LABEL[hud.objective]}</span>
+          {OBJECTIVE_KEY[hud.objective] && (
+            <span className="objective">{t(OBJECTIVE_KEY[hud.objective]!)}</span>
           )}
-          {hud.modifier !== 'none' && (
-            <span className="objective mod">{MODIFIER_LABEL[hud.modifier]}</span>
+          {MODIFIER_KEY[hud.modifier] && (
+            <span className="objective mod">{t(MODIFIER_KEY[hud.modifier]!)}</span>
           )}
         </div>
         <div className="hud-row sub">
           <span className={lowTime ? 'timer low' : 'timer'}>{hud.timeLeft.toFixed(1)}s</span>
           <span className="targets">
-            타깃 {hud.totalTargets - hud.targetsLeft}/{hud.totalTargets}
+            {t('game.targets', { a: hud.totalTargets - hud.targetsLeft, b: hud.totalTargets })}
           </span>
         </div>
       </div>
@@ -136,9 +139,7 @@ export default function Game({
 
       {hud.phase === 'playing' && !hud.aiming && !tutorial && (
         <div className="hint">
-          {hud.modifier === 'noSlow'
-            ? '이번 판은 안 느려짐 · 반대로 당겼다 떼면 발사'
-            : '누르면 느려짐 · 반대로 당겼다 떼면 발사'}
+          {hud.modifier === 'noSlow' ? t('game.hintNoSlow') : t('game.hint')}
         </div>
       )}
 
@@ -147,15 +148,15 @@ export default function Game({
         <div className="tut-legend inplay">
           <span>
             <i style={{ background: '#4de1ff' }} />
-            빗나감
+            {t('legend.miss')}
           </span>
           <span>
             <i style={{ background: '#ffc94d' }} />
-            부순다
+            {t('legend.break')}
           </span>
           <span>
             <i style={{ background: '#ff4d5e' }} />
-            실패
+            {t('legend.fail')}
           </span>
         </div>
       )}
@@ -163,7 +164,7 @@ export default function Game({
       {cleared && (
         <div className="overlay">
           <h1 className="ok">STAGE CLEAR</h1>
-          {noAds && <p className="meta">코인 2배 적용</p>}
+          {noAds && <p className="meta">{t('game.boostOn')}</p>}
           <div className="buttons">
             {ADS_ENABLED && !noAds && !ad.hidden && (
               <button
@@ -171,12 +172,16 @@ export default function Game({
                 disabled={ad.pending || doubled || hud.coins === 0}
                 onClick={watchForCoins}
               >
-                {doubled ? '코인 2배 받음' : ad.pending ? '광고 보는 중…' : '광고 보고 코인 2배'}
+                {doubled
+                  ? t('game.adDoubleDone')
+                  : ad.pending
+                    ? t('game.adLoading')
+                    : t('game.adDouble')}
               </button>
             )}
             {/* 등록은 클리어와 동시에 이미 끝났다. 여기서는 보기만 한다. */}
             <button className="ghost" onClick={() => onOpenRanking(hud.stage)}>
-              랭킹 보기
+              {t('game.viewRank')}
             </button>
             <button
               className="primary"
@@ -185,12 +190,12 @@ export default function Game({
                 nextStage()
               }}
             >
-              다음 스테이지
+              {t('game.next')}
             </button>
           </div>
           {ad.message && <p className="ad-note">{ad.message}</p>}
           <button className="link" onClick={onQuit}>
-            타이틀로
+            {t('game.toTitle')}
           </button>
         </div>
       )}
@@ -199,16 +204,16 @@ export default function Game({
         <div className="overlay">
           <h1>FAILED</h1>
           <p className="meta">
-            타깃 {hud.totalTargets - hud.targetsLeft}/{hud.totalTargets} 파괴
+            {t('game.destroyed', { a: hud.totalTargets - hud.targetsLeft, b: hud.totalTargets })}
           </p>
           <div className="buttons">
             {hud.canRevive && (noAds || (ADS_ENABLED && !ad.hidden)) && (
               <button className="ghost" disabled={ad.pending} onClick={watchForRevive}>
                 {noAds
-                  ? `시간 +${CONTINUE_SECONDS}초`
+                  ? t('game.revive', { n: CONTINUE_SECONDS })
                   : ad.pending
-                    ? '광고 보는 중…'
-                    : `광고 보고 시간 +${CONTINUE_SECONDS}초`}
+                    ? t('game.adLoading')
+                    : t('game.adRevive', { n: CONTINUE_SECONDS })}
               </button>
             )}
             {hud.canRevive && coins >= continueCost(hud.stage) && (
@@ -223,16 +228,16 @@ export default function Game({
                   if (paid) revive()
                 }}
               >
-                코인 {continueCost(hud.stage)}으로 이어하기
+                {t('game.buyContinue', { n: continueCost(hud.stage) })}
               </button>
             )}
             <button className="primary" onClick={retry}>
-              다시하기
+              {t('game.retry')}
             </button>
           </div>
           {ad.message && <p className="ad-note">{ad.message}</p>}
           <button className="link" onClick={onQuit}>
-            타이틀로
+            {t('game.toTitle')}
           </button>
         </div>
       )}

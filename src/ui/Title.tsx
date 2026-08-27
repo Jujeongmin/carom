@@ -1,5 +1,7 @@
 import type { Progress } from '../progress'
+import { t, useLang } from '../i18n'
 import Coin from './Coin'
+import LangSwitch from './LangSwitch'
 
 interface Props {
   progress: Progress
@@ -9,6 +11,8 @@ interface Props {
 }
 
 export default function Title({ progress, onStart, onOpenRanking, onOpenShop }: Props) {
+  // 언어가 바뀌면 이 화면부터 다시 그려야 한다. t()는 값을 읽을 뿐 구독하지 않는다.
+  useLang()
   const hasProgress = progress.reached > 1
 
   return (
@@ -21,7 +25,9 @@ export default function Title({ progress, onStart, onOpenRanking, onOpenShop }: 
           진행이 없다고 통계 줄을 통째로 숨기면, 코인을 갖고 있어도 없는 것처럼 보인다.
         */}
         <div className="title-stats">
-          {hasProgress ? `스테이지 ${progress.reached - 1} 클리어` : '누르고 반대로 당겼다 떼면 발사'}
+          {hasProgress
+            ? t('title.cleared', { n: progress.reached - 1 })
+            : t('title.firstHint')}
         </div>
         <Coin amount={progress.coins} />
 
@@ -32,17 +38,19 @@ export default function Title({ progress, onStart, onOpenRanking, onOpenShop }: 
         */}
         <div className="title-buttons">
           <button className="primary" onClick={() => onStart(hasProgress ? progress.reached : 1)}>
-            {hasProgress ? `STAGE ${progress.reached} 이어하기` : '시작'}
+            {hasProgress ? t('title.continue', { n: progress.reached }) : t('title.start')}
           </button>
           <button className="menu" onClick={onOpenShop}>
             <img src="/assets/icon_vx.webp" alt="" />
-            상점
+            {t('title.shop')}
           </button>
           <button className="menu" onClick={onOpenRanking}>
             <img src="/assets/icon_rank.webp" alt="" />
-            랭킹
+            {t('title.rank')}
           </button>
         </div>
+
+        <LangSwitch />
       </div>
     </div>
   )

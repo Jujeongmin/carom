@@ -7,6 +7,7 @@ import {
   type Ranked,
   type RemoteServer,
 } from '../net/leaderboard'
+import { t, useLang } from '../i18n'
 
 interface Props {
   /** 지금 도달한 스테이지. 이름을 바꿀 때 기록을 이 값으로 다시 올린다. */
@@ -26,6 +27,7 @@ interface Props {
  * 빈 목록을 순위처럼 보여주면 "아무도 없다"와 "못 불러왔다"가 구분되지 않는다.
  */
 export default function Leaderboard({ currentStage, nickname, onRename, onClose }: Props) {
+  useLang()
   const { connected, server, account } = useGameServer()
   const [top, setTop] = useState<RankEntry[]>([])
   const [mine, setMine] = useState<Ranked<RankEntry>>({ entry: null, rank: -1 })
@@ -39,8 +41,9 @@ export default function Leaderboard({ currentStage, nickname, onRename, onClose 
   const refresh = useCallback(async () => {
     if (!remote) return
     setLoading(true)
-    const [t, m] = await Promise.all([fetchTop(remote), fetchMyRank(remote)])
-    setTop(t)
+    // 변수 이름을 t로 두면 번역 함수 t를 가린다. 지금은 여기서 안 쓰지만 언젠가 쓴다.
+    const [rows, m] = await Promise.all([fetchTop(remote), fetchMyRank(remote)])
+    setTop(rows)
     setMine(m)
     setLoading(false)
   }, [remote])
@@ -67,9 +70,9 @@ export default function Leaderboard({ currentStage, nickname, onRename, onClose 
     <div className="overlay" onClick={onClose}>
       <div className="board" onClick={(e) => e.stopPropagation()}>
         <h2 className="board-title">RANKING</h2>
-        <p className="board-note small">최고 도달 스테이지 · 클리어할 때마다 자동 등록</p>
+        <p className="board-note small">{t('rank.subtitle')}</p>
 
-        {!connected && <p className="board-note">서버에 연결 중…</p>}
+        {!connected && <p className="board-note">{t('rank.connecting')}</p>}
 
         {connected &&
           (editing ? (
@@ -77,13 +80,13 @@ export default function Leaderboard({ currentStage, nickname, onRename, onClose 
               <input
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
-                placeholder="닉네임 (1~15자)"
+                placeholder={t('rank.namePlaceholder')}
                 maxLength={15}
                 disabled={saving}
                 autoFocus
               />
               <button className="primary" onClick={save} disabled={saving || !draft.trim()}>
-                {saving ? '저장 중…' : '저장'}
+                {saving ? t('rank.saving') : t('rank.save')}
               </button>
             </div>
           ) : (
@@ -94,14 +97,14 @@ export default function Leaderboard({ currentStage, nickname, onRename, onClose 
                 setEditing(true)
               }}
             >
-              {nickname || '이름 설정'} · 변경
+              {nickname || t('rank.setName')} · {t('rank.change')}
             </button>
           ))}
 
-        {connected && loading && <p className="board-note">불러오는 중…</p>}
+        {connected && loading && <p className="board-note">{t('shop.loading')}</p>}
 
         {connected && !loading && top.length === 0 && (
-          <p className="board-note">아직 등록된 기록이 없음</p>
+          <p className="board-note">{t('rank.emptyList')}</p>
         )}
 
         {connected && !loading && top.length > 0 && (
@@ -113,7 +116,7 @@ export default function Leaderboard({ currentStage, nickname, onRename, onClose 
               >
                 <span className="rank">{i + 1}</span>
                 <span className="nick">{e.nickname}</span>
-                <span className="val">STAGE {e.stage}</span>
+                <span className="val">{t('rank.stage', { n: e.stage })}</span>
               </li>
             ))}
           </ol>
@@ -124,12 +127,12 @@ export default function Leaderboard({ currentStage, nickname, onRename, onClose 
           <div className="board-mine">
             <span className="rank">{mine.rank}</span>
             <span className="nick">{mine.entry.nickname}</span>
-            <span className="val">STAGE {mine.entry.stage}</span>
+            <span className="val">{t('rank.stage', { n: mine.entry.stage })}</span>
           </div>
         )}
 
         <button className="primary board-close" onClick={onClose}>
-          닫기
+          {t('shop.close')}
         </button>
       </div>
     </div>

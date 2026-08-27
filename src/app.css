@@ -682,3 +682,37 @@ button.menu:active {
   backdrop-filter: blur(2px);
   pointer-events: none;
 }
+
+/* ─────────────── 언어 ─────────────── */
+
+/*
+  네 개뿐이라 드롭다운을 쓰지 않는다. 시작 버튼보다 아래·작게 두어
+  "게임을 시작하는 곳"과 "설정을 바꾸는 곳"이 섞이지 않게 한다.
+*/
+.lang-switch {
+  display: flex;
+  gap: 4px;
+  margin-top: 14px;
+}
+
+button.lang {
+  padding: 6px 10px;
+  border: 1px solid rgba(232, 236, 245, 0.14);
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(232, 236, 245, 0.45);
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+button.lang.on {
+  border-color: rgba(77, 225, 255, 0.45);
+  background: rgba(77, 225, 255, 0.12);
+  color: #e8ecf5;
+}
+
+button.lang:active {
+  background: rgba(77, 225, 255, 0.2);
+}

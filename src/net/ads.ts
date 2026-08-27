@@ -1,4 +1,5 @@
 import { Verse8Ads } from '@verse8/ads'
+import { t } from '../i18n'
 
 /**
  * Verse8 Ads 래퍼.
@@ -43,7 +44,7 @@ export function adBusy(): boolean {
 }
 
 export async function showRewarded(placementId: PlacementId): Promise<AdOutcome> {
-  if (showing) return { ok: false, reason: 'busy', message: '광고를 불러오는 중입니다' }
+  if (showing) return { ok: false, reason: 'busy', message: t('ads.busy') }
   showing = true
   try {
     const result = await Verse8Ads.showRewarded({ placementId })
@@ -58,15 +59,15 @@ export async function showRewarded(placementId: PlacementId): Promise<AdOutcome>
     const code = result.error?.code
     if (code === 'unsupported_env') {
       unsupported = true
-      return { ok: false, reason: 'unsupported', message: '이 환경에서는 광고를 볼 수 없습니다' }
+      return { ok: false, reason: 'unsupported', message: t('ads.unsupported') }
     }
     if (code === 'busy') {
-      return { ok: false, reason: 'busy', message: '광고를 불러오는 중입니다' }
+      return { ok: false, reason: 'busy', message: t('ads.busy') }
     }
     if (code === 'timeout') {
-      return { ok: false, reason: 'timeout', message: '광고를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요' }
+      return { ok: false, reason: 'timeout', message: t('ads.timeout') }
     }
-    return { ok: false, reason: 'error', message: '광고를 볼 수 없습니다' }
+    return { ok: false, reason: 'error', message: t('ads.error') }
   } finally {
     showing = false
   }

@@ -1,4 +1,5 @@
 import { PALETTE } from '../game/config'
+import { t, useLang } from '../i18n'
 
 interface Props {
   onClose: () => void
@@ -17,6 +18,7 @@ interface Props {
  * 읽는 동안 제한 시간이 흐르면 안 되므로 이 카드가 떠 있는 동안 루프를 멈춘다.
  */
 export default function Tutorial({ onClose }: Props) {
+  useLang()
   return (
     <div className="overlay tutorial-wrap">
       <div className="board tutorial" onClick={(e) => e.stopPropagation()}>
@@ -24,40 +26,40 @@ export default function Tutorial({ onClose }: Props) {
 
         <ol className="tut-steps">
           <li>
-            <strong>당겼다 떼면 발사</strong>
-            <span>화면을 누른 채 가고 싶은 방향의 반대로 당긴다. 멀리 당길수록 세게 나간다.</span>
+            <strong>{t('tut.s1.title')}</strong>
+            <span>{t('tut.s1.body')}</span>
           </li>
           <li>
-            <strong>선은 결과를 미리 보여준다</strong>
-            <span>떼기 전에 공이 어디로 튀고 무엇을 부수는지 그대로 나온다.</span>
+            <strong>{t('tut.s2.title')}</strong>
+            <span>{t('tut.s2.body')}</span>
           </li>
           <li>
-            <strong>금색 물체를 전부 부수면 클리어</strong>
-            <span>제한 시간 안에. 가만히 있어서 깨지는 판은 없다.</span>
+            <strong>{t('tut.s3.title')}</strong>
+            <span>{t('tut.s3.body')}</span>
           </li>
         </ol>
 
         <div className="tut-legend">
           <span>
             <i style={{ background: PALETTE.aim }} />
-            빗나감
+            {t('legend.miss')}
           </span>
           <span>
             <i style={{ background: PALETTE.target }} />
-            부순다
+            {t('legend.break')}
           </span>
           <span>
             <i style={{ background: '#ff8c3c' }} />
-            폭발 연쇄
+            {t('legend.chain')}
           </span>
           <span>
             <i style={{ background: PALETTE.hazard }} />
-            여기서 실패
+            {t('legend.failHere')}
           </span>
         </div>
 
         <button className="primary board-close" onClick={onClose}>
-          시작
+          {t('title.start')}
         </button>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useGameServer } from '@agent8/gameserver'
 import { PLACEMENT, adsUnsupported, showRewarded, type PlacementId } from '../net/ads'
+import { t } from '../i18n'
 import type { RemoteServer } from '../net/leaderboard'
 
 /**
@@ -48,7 +49,7 @@ export function useAdReward() {
         if (placement !== PLACEMENT.doubleCoins) return { ok: true }
 
         if (!connected || !remote) {
-          setMessage('서버에 연결되지 않아 보상을 받을 수 없습니다')
+          setMessage(t('ads.noServer'))
           return { ok: false }
         }
 
@@ -61,16 +62,14 @@ export function useAdReward() {
 
           if (!res?.granted) {
             setMessage(
-              res?.reason === 'already_granted'
-                ? '이미 받은 보상입니다'
-                : '보상을 확인하지 못했습니다',
+              res?.reason === 'already_granted' ? t('ads.already') : t('ads.unverified'),
             )
             return { ok: false }
           }
           return { ok: true, wallet: res.wallet }
         } catch (e) {
           console.warn('[ads] redeem failed', e)
-          setMessage('보상을 확인하지 못했습니다')
+          setMessage(t('ads.unverified'))
           return { ok: false }
         }
       } finally {

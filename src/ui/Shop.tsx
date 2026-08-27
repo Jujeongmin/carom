@@ -3,6 +3,7 @@ import { useVXShop } from '@verse8/platform'
 import { NO_ADS_PRODUCT_ID, SKINS, VX_PRODUCTS } from '../shop'
 import type { Wallet } from '../hooks/useWallet'
 import Coin from './Coin'
+import { t, useLang } from '../i18n'
 
 interface Props {
   wallet: Wallet
@@ -29,6 +30,7 @@ type Tab = 'coin' | 'vx'
  * 없는 상품을 그려놓으면 눌렀을 때 실패하는 버튼이 된다.
  */
 export default function Shop({ wallet, online, onBuy, onEquip, onRefreshWallet, onClose }: Props) {
+  useLang()
   const [tab, setTab] = useState<Tab>('coin')
   const { items, isLoading, error, buyItem, refresh, onClose: onShopClose } = useVXShop()
 
@@ -56,7 +58,7 @@ export default function Shop({ wallet, online, onBuy, onEquip, onRefreshWallet, 
             className={tab === 'coin' ? 'shop-tab on' : 'shop-tab'}
             onClick={() => setTab('coin')}
           >
-            코인
+            {t('shop.tabCoin')}
           </button>
           <button className={tab === 'vx' ? 'shop-tab on' : 'shop-tab'} onClick={() => setTab('vx')}>
             <img src="/assets/icon_vx.webp" alt="" />
@@ -76,13 +78,13 @@ export default function Shop({ wallet, online, onBuy, onEquip, onRefreshWallet, 
                     <img src={`/assets/${s.sprite}.webp`} alt="" />
                     <div className="shop-info">
                       <strong>{s.name}</strong>
-                      <span>{s.note}</span>
+                      <span>{t(s.noteKey)}</span>
                     </div>
                     {equipped ? (
-                      <span className="shop-tag">착용 중</span>
+                      <span className="shop-tag">{t('shop.equipped')}</span>
                     ) : owned ? (
                       <button className="ghost small" onClick={() => onEquip(s.id)}>
-                        착용
+                        {t('shop.equip')}
                       </button>
                     ) : (
                       <button
@@ -99,13 +101,13 @@ export default function Shop({ wallet, online, onBuy, onEquip, onRefreshWallet, 
             </div>
 
             <p className="board-note small">
-              외형만 바뀐다 · 성능 차이 없음
+              {t('shop.cosmeticOnly')}
               <br />
-              {wallet.noAds ? '광고 제거 적용 중 · 코인 2배' : '코인은 연쇄와 폭발로 얻는다'}
+              {wallet.noAds ? t('shop.boostOn') : t('shop.coinSource')}
               {!online && (
                 <>
                   <br />
-                  서버에 연결되지 않음 · 이 기기에만 저장됨
+                  {t('shop.offline')}
                 </>
               )}
             </p>
@@ -115,7 +117,7 @@ export default function Shop({ wallet, online, onBuy, onEquip, onRefreshWallet, 
         )}
 
         <button className="primary board-close" onClick={onClose}>
-          닫기
+          {t('shop.close')}
         </button>
       </div>
     </div>
@@ -137,9 +139,9 @@ function VxTab({
   wallet: Wallet
   onBuy: (productId: string) => void
 }) {
-  if (isLoading) return <p className="board-note">불러오는 중…</p>
-  if (error) return <p className="board-note">상점을 불러오지 못했습니다</p>
-  if (items.length === 0) return <p className="board-note">판매 중인 상품이 없습니다</p>
+  if (isLoading) return <p className="board-note">{t('shop.loading')}</p>
+  if (error) return <p className="board-note">{t('shop.loadFailed')}</p>
+  if (items.length === 0) return <p className="board-note">{t('shop.empty')}</p>
 
   return (
     <>
@@ -155,11 +157,11 @@ function VxTab({
               <img src={it.imageUrl || `/assets/${local?.image ?? 'icon_vx'}.webp`} alt="" />
               <div className="shop-info">
                 <strong>{it.name || local?.fallbackName || it.productId}</strong>
-                <span>{local?.grants ?? it.description}</span>
+                <span>{local ? t(local.grantsKey) : it.description}</span>
               </div>
               {blocked ? (
                 <span className="shop-tag">
-                  {already ? '보유 중' : (it.purchaseBlockReason ?? '구매 불가')}
+                  {already ? t('shop.owned') : (it.purchaseBlockReason ?? t('shop.blocked'))}
                 </span>
               ) : (
                 <button className="ghost small" onClick={() => onBuy(it.productId)}>
@@ -173,9 +175,9 @@ function VxTab({
       </div>
 
       <p className="board-note small">
-        실제 결제 · 계정에 영구 적용
+        {t('shop.vxNote')}
         <br />
-        스킨은 코인으로만 산다 · 순위에 영향 없음
+        {t('shop.vxNote2')}
       </p>
     </>
   )

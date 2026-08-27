@@ -1,0 +1,568 @@
+.app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.stage {
+  width: 100%;
+  height: 100%;
+}
+
+.hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: max(12px, env(safe-area-inset-top)) 16px 0;
+  pointer-events: none;
+}
+
+.hud-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.hud-row.sub {
+  margin-top: 2px;
+}
+
+.badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+/* 특수 조건은 규칙이 아니라 지금 지켜야 할 것이므로 눈에 띄어야 한다. */
+.objective {
+  display: inline-block;
+  box-shadow: 0 0 10px rgba(255, 201, 77, 0.12);
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 201, 77, 0.14);
+  border: 1px solid rgba(255, 201, 77, 0.4);
+  color: #ffc94d;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* 모디파이어는 조건과 구분되어야 한다. 같은 색이면 둘이 한 덩어리로 읽힌다. */
+.objective.mod {
+  background: rgba(180, 123, 255, 0.14);
+  border-color: rgba(180, 123, 255, 0.4);
+  color: #c9a6ff;
+}
+
+.stage-no {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: rgba(232, 236, 245, 0.92);
+}
+
+.coins {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ◎ 문자 대신 만들어둔 아이콘을 쓴다. 이미 있는데 안 쓰이고 있었다. */
+.coin-icon {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 5px rgba(255, 201, 77, 0.5));
+}
+
+.timer {
+  font-family: var(--font-display);
+  font-size: 25px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 14px rgba(77, 225, 255, 0.35);
+}
+
+/* 남은 시간이 얼마 없다는 것은 색으로 먼저 읽혀야 한다. */
+.timer.low {
+  color: var(--red);
+  text-shadow: 0 0 16px rgba(255, 77, 94, 0.6);
+  animation: lowPulse 0.7s ease-in-out infinite;
+}
+
+@keyframes lowPulse {
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.targets {
+  font-size: 13px;
+  color: rgba(232, 236, 245, 0.7);
+}
+
+.dashes {
+  display: flex;
+  gap: 5px;
+  margin-top: 9px;
+  align-items: center;
+  min-height: 8px;
+}
+
+.dash-pip {
+  width: 22px;
+  height: 7px;
+  border-radius: 4px;
+  background: #4de1ff;
+  box-shadow: 0 0 8px rgba(77, 225, 255, 0.55);
+}
+
+.dash-empty {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: #ff4d5e;
+}
+
+.hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: rgba(232, 236, 245, 0.4);
+  pointer-events: none;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  /* backdrop-filter는 쓰지 않는다. 캔버스 위에서 비싸고 얻는 것이 없다. */
+  background: radial-gradient(
+    ellipse at center,
+    rgba(5, 5, 13, 0.86) 0%,
+    rgba(5, 5, 13, 0.96) 100%
+  );
+}
+
+.overlay h1 {
+  font-family: var(--font-display);
+  font-size: 19px;
+  letter-spacing: 0.3em;
+  color: var(--red);
+  font-weight: 900;
+  padding-left: 0.3em;
+  text-shadow: 0 0 22px rgba(255, 77, 94, 0.55);
+}
+
+.overlay h1.ok {
+  color: var(--cyan);
+  text-shadow: 0 0 22px rgba(77, 225, 255, 0.55);
+}
+
+.stars {
+  font-size: 40px;
+  letter-spacing: 0.12em;
+  color: #ffc94d;
+}
+
+.meta {
+  font-size: 13px;
+  color: rgba(232, 236, 245, 0.62);
+}
+
+.buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 22px;
+  width: min(280px, 70vw);
+}
+
+button {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition:
+    transform 90ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.975);
+}
+
+/* 주 동작 — 네온이 켜진 버튼 */
+button.primary {
+  background: linear-gradient(180deg, #6ae9ff 0%, #2bc8ee 100%);
+  color: #05202b;
+  border-color: rgba(180, 245, 255, 0.9);
+  box-shadow:
+    0 0 18px rgba(77, 225, 255, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* 보조 동작 — 테두리만 켜진 버튼 */
+button.ghost {
+  background: rgba(255, 201, 77, 0.07);
+  color: var(--gold);
+  border-color: rgba(255, 201, 77, 0.5);
+  box-shadow: 0 0 12px rgba(255, 201, 77, 0.12);
+}
+
+button.ghost:active:not(:disabled) {
+  background: rgba(255, 201, 77, 0.14);
+}
+
+.track {
+  margin-top: 14px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: rgba(232, 236, 245, 0.35);
+}
+
+/* ─────────────── 리더보드 ─────────────── */
+
+.board {
+  width: min(360px, 88vw);
+  max-height: 78vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border-radius: 16px;
+  background: #0d1020;
+  border: 1px solid rgba(77, 225, 255, 0.28);
+  box-shadow:
+    0 0 40px rgba(77, 225, 255, 0.1),
+    0 18px 50px rgba(0, 0, 0, 0.6);
+}
+
+.board-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.28em;
+  color: var(--cyan);
+  text-align: center;
+  text-shadow: 0 0 16px rgba(77, 225, 255, 0.45);
+}
+
+.board-note {
+  text-align: center;
+  font-size: 13px;
+  color: rgba(232, 236, 245, 0.5);
+  padding: 18px 0;
+}
+
+.board-submit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.board-submit input {
+  font: inherit;
+  padding: 11px 13px;
+  border-radius: 10px;
+  border: 1px solid rgba(232, 236, 245, 0.2);
+  background: rgba(232, 236, 245, 0.06);
+  color: #e8ecf5;
+}
+
+.board-list {
+  list-style: none;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.board-list li,
+.board-mine {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  font-size: 13px;
+  background: rgba(232, 236, 245, 0.04);
+}
+
+/* 내 기록은 목록에서 바로 찾을 수 있어야 한다 */
+.board-list li.me,
+.board-mine {
+  background: rgba(77, 225, 255, 0.14);
+}
+
+.board-list .rank,
+.board-mine .rank {
+  width: 26px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: rgba(232, 236, 245, 0.55);
+  font-variant-numeric: tabular-nums;
+}
+
+.board-list .nick,
+.board-mine .nick {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board-list .val,
+.board-mine .val {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.board-list .val em,
+.board-mine .val em {
+  margin-left: 7px;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 11px;
+  color: rgba(232, 236, 245, 0.45);
+}
+
+.board-close {
+  margin-top: 2px;
+}
+
+.board-note.small {
+  font-size: 11px;
+  padding: 4px 0 0;
+}
+
+/* ─────────────── 상점 ─────────────── */
+
+.shop-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 코인 / VX 탭. 실제 결제가 섞이므로 지금 어느 쪽을 보고 있는지 항상 분명해야 한다. */
+.shop-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.shop-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 0;
+  border: 1px solid rgba(232, 236, 245, 0.18);
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(232, 236, 245, 0.6);
+  font: inherit;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.shop-tab.on {
+  background: rgba(77, 225, 255, 0.14);
+  border-color: rgba(77, 225, 255, 0.45);
+  color: #e8ecf5;
+}
+
+.shop-tab img,
+.vx-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+/* 이름 변경 버튼은 순위표 위에 조용히 있어야 한다. 순위보다 눈에 띄면 안 된다. */
+.board-rename {
+  align-self: center;
+}
+
+.shop-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.shop-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(232, 236, 245, 0.05);
+  border: 1px solid transparent;
+}
+
+/* 착용 중인 것은 한눈에 구분돼야 한다 */
+.shop-item.on {
+  background: rgba(77, 225, 255, 0.12);
+  border-color: rgba(77, 225, 255, 0.4);
+}
+
+/* 직계 자식만. 그냥 `.shop-item img`로 두면 가격 버튼 안의 코인 아이콘까지 커진다. */
+.shop-item > img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.shop-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shop-info strong {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.shop-info span {
+  font-size: 11px;
+  color: rgba(232, 236, 245, 0.5);
+}
+
+.shop-tag {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: #4de1ff;
+}
+
+button.small {
+  padding: 8px 12px;
+  font-size: 12px;
+  border-radius: 9px;
+  white-space: nowrap;
+}
+
+button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+
+button.link {
+  margin-top: 16px;
+  background: none;
+  border: none;
+  padding: 6px 10px;
+  color: rgba(232, 236, 245, 0.45);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+/* ─────────────── 타이틀 ─────────────── */
+
+.title {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* 게임 배경과 같은 어둠. 로고의 네온이 유일한 빛이 되게 둔다. */
+  background:
+    radial-gradient(ellipse at 50% 42%, rgba(77, 120, 255, 0.14) 0%, rgba(5, 5, 13, 0) 62%),
+    #05050d;
+}
+
+.title-body {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: max(24px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom));
+}
+
+.title-logo {
+  width: min(88%, 380px);
+  filter: drop-shadow(0 0 26px rgba(120, 160, 255, 0.4));
+}
+
+.title-stats {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: rgba(232, 236, 245, 0.55);
+  text-align: center;
+}
+
+.title-buttons {
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(320px, 78%);
+}
+
+/*
+  타이틀 메뉴 버튼.
+  시작 버튼과 같은 폭·높이로 세로로 쌓는다 — 크기가 다르면 보조 기능처럼 보이고,
+  실제로 상점·랭킹은 보조가 아니다.
+*/
+button.menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  background: rgba(77, 225, 255, 0.07);
+  border-color: rgba(77, 225, 255, 0.3);
+  color: rgba(232, 236, 245, 0.88);
+  box-shadow: 0 0 12px rgba(77, 225, 255, 0.08);
+}
+
+button.menu img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px rgba(255, 201, 77, 0.45));
+}
+
+button.menu:active {
+  background: rgba(77, 225, 255, 0.15);
+}
+
+/* 광고 실패 안내. 실패가 조용히 사라지면 유저는 버튼이 고장난 줄 안다. */
+.ad-note {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--red);
+  text-align: center;
+  max-width: min(280px, 70vw);
+}

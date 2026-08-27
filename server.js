@@ -27,7 +27,12 @@ const REWARD_TABLE = {
   'carom-double-coins': { amount: 1, type: 'coin-2x' },
 }
 
-const ADS_VERIFIER = 'https://ads-verifier.verse8.io/ads/status'
+/**
+ * 검증자 베이스 URL. 경로는 붙이지 않는다 — 붙여두면 아래에서 또 붙여서
+ * `/ads/status/ads/verify` 같은 주소가 만들어진다(실제로 그랬다).
+ * PROTOCOL.md: VERIFIER_BASE는 프로덕션에서 https://ads-verifier.verse8.io.
+ */
+const ADS_VERIFIER = 'https://ads-verifier.verse8.io'
 
 /**
  * 코인 상점 가격표. 클라이언트가 보낸 가격은 절대 쓰지 않는다.
@@ -82,24 +87,73 @@ function normalizeWallet(state) {
   }
 }
 
-/**
- * 검증자에게 이 requestId가 실제로 시청 완료됐는지 묻는다.
- * pending이면 잠깐 기다렸다 다시 묻되, 무한정 매달리지 않는다.
- */
-async function verifyWithAdsService(requestId, attempts = 4) {
-  for (let i = 0; i < attempts; i++) {
-    const res = await fetch(`${ADS_VERIFIER}?requestId=${encodeURIComponent(requestId)}`)
-    if (!res.ok && res.status !== 202) return false
-
-    const body = await res.json()
-    if (body.status === 'verified') return true
-    if (body.status === 'pending') {
-      await new Promise((r) => setTimeout(r, 1500))
-      continue
-    }
-    return false // dismissed | failed
+/** 응답 본문을 문자열로. 진단용이라 실패해도 던지지 않는다. */
+async function readBody(res) {
+  try {
+    return (await res.text()).slice(0, 300)
+  } catch {
+    return ''
   }
-  return false
+}
+
+/**
+ * 이 requestId가 실제로 시청 완료됐는지 검증자에게 확인한다.
+ *
+ * 게임 서버의 계약은 **POST /ads/verify** 다(PROTOCOL.md 라운드트립 다이어그램:
+ * `gameServer.grantReward(requestId) ──▶ POST /ads/verify ←─ 200 OK reward`).
+ * 소비는 1회성이라 같은 requestId로 두 번 받을 수 없다.
+ *
+ * 처음에 GET /ads/status를 쓰고 있었는데 그건 셸(H5 렌더러)이 SSV를 기다리며
+ * 폴링하는 내부 경로다. 그래서 광고를 끝까지 봐도 검증이 계속 실패했다.
+ *
+ * 실패 사유를 그대로 돌려준다. "보상을 확인하지 못했습니다" 한 줄로 뭉개면
+ * 엔드포인트가 틀린 것인지 광고를 안 본 것인지 구분할 수 없다.
+ *
+ * @returns {Promise<{ok: true, reward?: object} | {ok: false, detail: string}>}
+ */
+async function verifyWithAdsService(requestId) {
+  const notes = []
+
+  // 1) 정식 경로. 소비 1회성이라 성공하면 여기서 끝난다.
+  try {
+    const res = await fetch(`${ADS_VERIFIER}/ads/verify`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ requestId }),
+    })
+    if (res.ok) {
+      const body = await res.json().catch(() => ({}))
+      return { ok: true, reward: body?.reward, detail: 'verify 200' }
+    }
+    notes.push(`verify ${res.status}: ${await readBody(res)}`)
+  } catch (e) {
+    notes.push(`verify threw: ${e?.message ?? e}`)
+  }
+
+  // 2) 폴백. /ads/verify가 401을 주는 환경이 있어서(로컬에서 확인) 읽기 경로도 본다.
+  //    SSV 콜백이 늦게 도착할 수 있으므로 처음보다 더 오래 기다린다 —
+  //    6초 만에 포기하던 것이 "광고를 봤는데 보상을 못 받는" 원인일 수 있다.
+  for (let i = 0; i < 8; i++) {
+    try {
+      const res = await fetch(`${ADS_VERIFIER}/ads/status?requestId=${encodeURIComponent(requestId)}`)
+      const body = await res.json().catch(() => ({}))
+
+      if (body?.status === 'verified' || body?.status === 'consumed') {
+        return { ok: true, reward: body?.reward, detail: `status ${body.status}` }
+      }
+      if (body?.status === 'pending' || res.status === 202) {
+        await new Promise((r) => setTimeout(r, 2000))
+        continue
+      }
+      notes.push(`status ${res.status}: ${JSON.stringify(body).slice(0, 200)}`)
+      break
+    } catch (e) {
+      notes.push(`status threw: ${e?.message ?? e}`)
+      break
+    }
+  }
+
+  return { ok: false, detail: notes.join(' | ') || 'status pending after 16s' }
 }
 
 class Server {
@@ -317,8 +371,11 @@ class Server {
     })
     if (seen.length) return { granted: false, reason: 'already_granted' }
 
-    if (!(await verifyWithAdsService(requestId))) {
-      return { granted: false, reason: 'verification_failed' }
+    const verified = await verifyWithAdsService(requestId)
+    if (!verified.ok) {
+      // detail을 그대로 올려보낸다. 클라이언트가 콘솔에 찍어주므로
+      // "엔드포인트가 틀렸는가 / 광고를 안 봤는가"를 배포 후에도 구분할 수 있다.
+      return { granted: false, reason: 'verification_failed', detail: verified.detail }
     }
 
     await $global.addCollectionItem('ad_grants', {

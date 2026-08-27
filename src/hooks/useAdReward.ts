@@ -58,9 +58,12 @@ export function useAdReward() {
             outcome.requestId,
             placement,
             earnedThisStage,
-          ])) as { granted?: boolean; reason?: string; wallet?: unknown }
+          ])) as { granted?: boolean; reason?: string; detail?: string; wallet?: unknown }
 
           if (!res?.granted) {
+            // 화면에는 한 줄만 띄우지만 사유는 남긴다.
+            // 광고를 봤는데 실패했을 때 원인을 물어볼 수 있어야 한다.
+            console.warn('[ads] reward refused:', res?.reason, res?.detail ?? '')
             setMessage(
               res?.reason === 'already_granted' ? t('ads.already') : t('ads.unverified'),
             )

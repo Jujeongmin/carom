@@ -1,4 +1,4 @@
-import { AIM, MODIFIER, RULES } from './config'
+import { AIM, CLEAR_REWARD, MODIFIER, RULES } from './config'
 import { advanceArena } from './physics'
 import { resolveRules } from './rules'
 import { shotFrom } from './shot'
@@ -92,6 +92,9 @@ export function step(state: GameState, dt: number, inputs: Input[]): GameState {
   for (const e of r.events) state.fx.push({ kind: e.kind, x: e.x, y: e.y, depth: e.depth })
 
   if (state.targetsLeft <= 0) {
+    // 클리어 보상은 여기서만 준다. resolveRules는 조준선(foresight)도 함께 쓰는 코드라
+    // 거기에 넣으면 아직 쏘지도 않은 예측이 코인을 세게 된다.
+    state.coins += CLEAR_REWARD.base + state.spec.targets * CLEAR_REWARD.perTarget
     state.phase = 'cleared'
     return state
   }

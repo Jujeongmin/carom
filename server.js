@@ -34,8 +34,8 @@ const ADS_VERIFIER = 'https://ads-verifier.verse8.io/ads/status'
  * src/shop.ts의 SKINS와 같아야 한다.
  */
 const SKIN_PRICES = {
-  pulse: 80,
-  ember: 300,
+  pulse: 200,
+  ember: 700,
 }
 
 /**

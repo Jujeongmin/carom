@@ -62,6 +62,7 @@ export default function App() {
           // 광고 코인 2배는 서버가 직접 지급한다. 클라이언트는 결과 지갑을 반영만 한다.
           onDoubleCoins={applyServerWallet}
           noAds={wallet.noAds}
+          coinBoost={wallet.coinBoost}
           onOpenRanking={() => setModal({ kind: 'rank' })}
         />
       )}

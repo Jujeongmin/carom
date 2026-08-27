@@ -45,6 +45,8 @@ interface Props {
    * 부활은 버튼을 남기되 광고 없이 바로 준다. 돈 낸 사람이 기능을 잃으면 안 된다.
    */
   noAds: boolean
+  /** 서버가 적립할 때 곱하는 배율. 화면에 보여줄 획득량을 서버와 같은 식으로 계산한다. */
+  coinBoost: number
   skin: SpriteName
   onQuit: () => void
 }
@@ -58,6 +60,7 @@ export default function Game({
   onBuyContinue,
   onDoubleCoins,
   noAds,
+  coinBoost,
   skin,
 }: Props) {
   useLang()
@@ -90,6 +93,19 @@ export default function Game({
     }
     if ((await ad.watch(PLACEMENT.revive)).ok) revive()
   }
+
+  /**
+   * 이번 판에서 실제로 지갑에 들어가는 코인.
+   *
+   * 서버가 하는 계산을 그대로 따라 한다:
+   *   recordClear     → floor(번 코인 × coinBoost)   (광고 제거를 사면 coinBoost가 2)
+   *   redeemAdReward  → 코인 2배 광고를 봤으면 번 코인만큼 한 번 더
+   * 두 경로는 서로 배타적이다(서버가 noAds 계정의 광고 보상을 already_doubled로 거절한다).
+   *
+   * 배율을 여기서 2라고 박아두지 않는다 — 서버 표가 바뀌면 화면이 거짓말을 하게 된다.
+   */
+  const reward = Math.floor(hud.coins * coinBoost) + (doubled ? hud.coins : 0)
+  const mult = hud.coins > 0 ? reward / hud.coins : 1
 
   const cleared = hud.phase === 'cleared'
   const failed = hud.phase === 'failed'
@@ -164,7 +180,20 @@ export default function Game({
       {cleared && (
         <div className="overlay">
           <h1 className="ok">STAGE CLEAR</h1>
-          {noAds && <p className="meta">{t('game.boostOn')}</p>}
+
+          {/*
+            깨고 얼마를 받았는지 보여준다. 이게 없으면 코인이 늘어난 것을
+            타이틀로 돌아가서야 알게 되고, "코인 2배" 광고를 볼 이유도 안 보인다.
+          */}
+          <div className="reward">
+            <span className="reward-label">{t('game.reward')}</span>
+            <Coin amount={reward} plus />
+            {mult > 1 && (
+              <span className="reward-mult">
+                ×{Number.isInteger(mult) ? mult : mult.toFixed(1)}
+              </span>
+            )}
+          </div>
           <div className="buttons">
             {ADS_ENABLED && !noAds && !ad.hidden && (
               <button

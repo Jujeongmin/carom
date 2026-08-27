@@ -716,3 +716,45 @@ button.lang.on {
 button.lang:active {
   background: rgba(77, 225, 255, 0.2);
 }
+
+/* ─────────────── 클리어 보상 ─────────────── */
+
+/*
+  깨고 얼마를 받았는지 클리어 화면에서 바로 보여준다.
+  이게 없으면 코인이 늘어난 것을 타이틀로 돌아가서야 알게 되고,
+  그러면 "코인 2배" 광고를 볼 이유도 화면에 안 보인다.
+*/
+.reward {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: rgba(255, 201, 77, 0.08);
+  border: 1px solid rgba(255, 201, 77, 0.28);
+}
+
+.reward-label {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: rgba(232, 236, 245, 0.55);
+}
+
+/* 획득량은 HUD의 잔액보다 커야 한다. 지금 벌어들인 것이 이 화면의 주인공이다. */
+.reward .coins {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+/* 2배라는 사실은 숫자만큼 눈에 들어와야 광고를 볼 이유가 읽힌다. */
+.reward-mult {
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(255, 201, 77, 0.9);
+  color: #201400;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}

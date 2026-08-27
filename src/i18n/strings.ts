@@ -107,12 +107,6 @@ export const STRINGS = {
     'zh-Hans': '本关不减速 · 向反方向拉后松手',
     'zh-Hant': '本關不減速 · 向反方向拉後放開',
   },
-  'game.boostOn': {
-    ko: '코인 2배 적용',
-    en: 'Double coins active',
-    'zh-Hans': '金币双倍生效中',
-    'zh-Hant': '金幣雙倍生效中',
-  },
   'game.adDouble': {
     ko: '광고 보고 코인 2배',
     en: 'Watch ad · double coins',
@@ -131,6 +125,7 @@ export const STRINGS = {
     'zh-Hans': '播放广告中…',
     'zh-Hant': '播放廣告中…',
   },
+  'game.reward': { ko: '획득', en: 'Earned', 'zh-Hans': '获得', 'zh-Hant': '獲得' },
   'game.viewRank': {
     ko: '랭킹 보기',
     en: 'View ranking',

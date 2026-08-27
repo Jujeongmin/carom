@@ -440,6 +440,14 @@ function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState, skin: Sprit
     }
   }
 
+  /*
+    글로우와 아래 이중 링은 **스킨 색을 따라가지 않는다.** 항상 시안이다.
+
+    시안은 판 위의 어떤 물체도 쓰지 않는 색이라, 스킨이 무엇이든 "이게 내 공"이
+    한눈에 읽힌다. 스킨 색을 따라가게 만들면 이 안전장치가 사라진다 —
+    실제로 앰버 스킨은 폭발통과 형태·색이 거의 같아서, 지금은 이 시안 링만이
+    둘을 갈라놓고 있다.
+  */
   const pulse = 0.5 + 0.5 * Math.sin(state.time * 4.5)
   glow(ctx, p.x, p.y, p.r * (2.8 + pulse * 0.5), `rgba(77,225,255,${0.45 + pulse * 0.2})`)
 

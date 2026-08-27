@@ -56,6 +56,27 @@ even lighting, no perspective, orthographic top-down view.
 
 ---
 
+## 2-1. 색 배정표 — 스킨에 쓰면 안 되는 색
+
+플레이어(큐볼)는 **판 위의 어떤 물체와도 헷갈리면 안 된다.**
+아래 색은 이미 게임 안에서 뜻을 갖고 있으므로 스킨에 쓰지 않는다.
+
+| 색 | 이미 쓰는 곳 | 뜻 |
+|---|---|---|
+| 금색 #ffc94d | 타깃(운석) 글로우 · 조준선 | 부술 것 |
+| 주황 #ff8c3c | 폭발통 | 연쇄 폭발 |
+| 적색 #ff4d5e | 위험물 | 닿으면 죽음 |
+| 회색 #8892a6 | 중립체 | 건드리면 안 될 수도 |
+| 바이올렛 | 포탈 | 통과 |
+
+남는 색: **시안**(기본 스킨) · **에메랄드/라임** · **마젠타**.
+스킨끼리 비슷한 것은 상관없다 — 문제는 스킨이 *물체*와 비슷할 때다.
+
+렌더러가 큐볼에 항상 시안 글로우와 링을 덧그리는 것도 이 때문이다
+(`drawPlayer`). 스킨 색을 따라가게 만들면 이 안전장치가 사라진다.
+
+---
+
 ## 3. 생성 작업
 
 ### GEN-1 — 캐릭터 시트
@@ -74,7 +95,7 @@ inside a darker ring. Keep interior detail minimal.
 
 Variation 1 — cyan core #4de1ff, dark steel ring.
 Variation 2 — violet core #b57bff, dark steel ring.
-Variation 3 — amber core #ffa14d, dark steel ring.
+Variation 3 — emerald core #3ddc84, dark steel ring.
 
 All three must be identical in shape and differ ONLY in color.
 ```
@@ -85,7 +106,14 @@ All three must be identical in shape and differ ONLY in color.
 |---|---|
 | `char_base.png` | 좌 (시안) |
 | `char_skin_pulse.png` | 중 (바이올렛) |
-| `char_skin_ember.png` | 우 (앰버) |
+| `char_skin_ember.png` | 우 (에메랄드) |
+
+> ⚠️ **3번은 원래 앰버(#ffa14d)였고, 그게 폭탄과 똑같이 생겼다.**
+> 폭탄 프롬프트(GEN-3)가 "둥근 금속 통 + 빛나는 주황 코어 + 주황 #ff8c3c"라
+> 스킨 3번과 형태·색 레시피가 완전히 겹쳤다. 큐볼이 판 위의 물체처럼 보이면
+> 플레이어가 자기 공을 찾느라 판을 두 번 읽어야 한다.
+>
+> 아래 §색 배정표에 없는 색만 스킨에 쓸 것.
 
 ---
 

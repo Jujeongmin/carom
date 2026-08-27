@@ -122,20 +122,22 @@ class Server {
 
       if (!higher && !renamed) return { updated: false, entry: existing }
 
-      // 항목 전체를 다시 쓴다. 바뀐 필드만 넘기면 저장되지 않는다 —
-      // 실제로 그렇게 두었더니 계정마다 첫 기록에서 랭킹이 멈춰 있었다.
-      // (스테이지 2를 깨도 목록은 STAGE 1 그대로였다.)
+      // updateCollectionItem은 인자가 **두 개**다: (collectionId, item).
+      // item 안의 __id로 대상을 찾는다. (collectionId, itemId, patch)로 부르면
+      // 세 번째 인자가 그냥 무시되고 아무것도 저장되지 않는다 —
+      // 그렇게 두었더니 계정마다 첫 기록에서 랭킹이 멈춰 있었다.
+      // 스테이지 2를 깨도 목록은 STAGE 1 그대로였고, 개명도 먹지 않았다.
       //
       // 이름만 바뀐 경우 updatedAt은 그대로 둔다.
       // 동점 정렬이 "먼저 도달한 순"이므로 개명이 순위를 떨어뜨리면 안 된다.
-      const { __id, ...row } = existing
       const next = {
-        ...row,
+        __id: existing.__id,
+        account: existing.account,
         nickname: name,
         stage: higher ? s : existing.stage,
         updatedAt: higher ? Date.now() : existing.updatedAt,
       }
-      await $global.updateCollectionItem('rankings', __id, next)
+      await $global.updateCollectionItem('rankings', next)
 
       // 낙관적으로 돌려주지 않는다. 정말 저장됐는지 다시 읽어서 그 값을 준다 —
       // 저장에 실패했는데 updated: true를 돌려주는 것이 이 버그를 오래 숨겼다.

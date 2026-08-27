@@ -36,7 +36,7 @@ async function call<T>(server: RemoteServer, fn: string, args: unknown[], fallba
 
 export async function submitProgress(server: RemoteServer, stage: number, nickname: string) {
   const res = await call<unknown>(server, 'submitProgress', [stage, nickname], null)
-  if (import.meta.env.DEV) console.log('[leaderboard] submitProgress →', res)
+  if (import.meta.env.DEV) console.log('[leaderboard] submitProgress →', JSON.stringify(res))
   return res
 }
 

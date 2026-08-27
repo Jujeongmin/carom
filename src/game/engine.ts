@@ -135,12 +135,24 @@ function applyInput(state: GameState, input: Input) {
   state.fx.push({ kind: 'dash', x: p.x, y: p.y, depth: 0 })
 
 }
-/** 부활: 시간을 돌려주고 위험물을 밀어낸다. 스테이지당 1회. */
+/**
+ * 부활. 스테이지당 1회.
+ *
+ * 죽는 경로가 둘이라 시간만 돌려주면 반쪽짜리가 된다:
+ *   시간 초과   → 시간이 필요하다
+ *   장애물 접촉 → 시간이 아니라 **그 자리에서 벗어나는 것**이 필요하다
+ * 그래서 시간은 바닥값으로만 보장하고, 무적과 밀어내기로 죽은 자리를 정리한다.
+ * 무적이 없으면 부활하자마자 같은 장애물에 다시 닿아 한 번 더 죽는다.
+ */
 export function revive(state: GameState) {
   if (state.phase !== 'failed') return
   state.phase = 'playing'
   state.usedRevive = true
-  state.timeLeft += RULES.reviveSeconds
+  // 더하지 않고 바닥값으로 올린다. 더하면 장애물로 죽은 쪽이 시간을 벌게 된다.
+  state.timeLeft = Math.max(state.timeLeft, RULES.reviveMinSeconds)
+  // 공을 멈춰 세운다. 죽을 때의 속도를 그대로 두면 부활 직후 다시 끌려간다.
+  state.player.vx = 0
+  state.player.vy = 0
   state.player.invulnUntil = state.time + 1.5
   pushAway(state)
 }

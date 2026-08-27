@@ -87,73 +87,53 @@ function normalizeWallet(state) {
   }
 }
 
-/** 응답 본문을 문자열로. 진단용이라 실패해도 던지지 않는다. */
-async function readBody(res) {
-  try {
-    return (await res.text()).slice(0, 300)
-  } catch {
-    return ''
-  }
-}
-
 /**
- * 이 requestId가 실제로 시청 완료됐는지 검증자에게 확인한다.
+ * 검증자에게 이 requestId를 물어본다.
  *
- * 게임 서버의 계약은 **POST /ads/verify** 다(PROTOCOL.md 라운드트립 다이어그램:
- * `gameServer.grantReward(requestId) ──▶ POST /ads/verify ←─ 200 OK reward`).
- * 소비는 1회성이라 같은 requestId로 두 번 받을 수 없다.
+ * **판단 불가는 거절이 아니다.** 결과가 세 갈래다:
+ *   ok: true              → 시청 확인됨
+ *   ok: false, hard: true → 검증자가 "안 봤다"고 명시(dismissed/failed)
+ *   ok: false, hard:false → 대답을 못 얻음(pending·401·네트워크 오류)
  *
- * 처음에 GET /ads/status를 쓰고 있었는데 그건 셸(H5 렌더러)이 SSV를 기다리며
- * 폴링하는 내부 경로다. 그래서 광고를 끝까지 봐도 검증이 계속 실패했다.
+ * 마지막 경우에 거절하면 안 된다. 광고를 끝까지 본 사람이 매번 빈손이 된다.
  *
- * 실패 사유를 그대로 돌려준다. "보상을 확인하지 못했습니다" 한 줄로 뭉개면
- * 엔드포인트가 틀린 것인지 광고를 안 본 것인지 구분할 수 없다.
+ * 왜 판단 불가가 흔한가: Verse8은 SSV 결과를 **게임 서버에 열어주지 않는다**.
+ * POST /ads/verify는 401 unauthorized를 돌려주고(PROTOCOL.md §10의 인증 표는
+ * 셸용 /ads/result만 다룬다), /ads/status는 셸이 쓰는 폴링 경로라
+ * 게임 서버가 물으면 202 pending에 머문다.
+ * 같은 플랫폼의 다른 게임도 서버 검증 없이 클라이언트 결과로 지급한다
+ * (@verse8/ads 래퍼 주석: "requestId is reserved for future server-side verification").
  *
- * @returns {Promise<{ok: true, reward?: object} | {ok: false, detail: string}>}
+ * ── 그래서 남는 구멍을 숨기지 않고 적어둔다 ──
+ * 지금 코인 2배를 실제로 막아주는 것은 검증이 아니라 다음 둘뿐이다:
+ *   1) (계정, requestId) 기록 — 같은 시청을 여러 번 쓰지 못한다
+ *   2) 스테이지당 코인 상한 — 한 번에 무제한으로 받지 못한다
+ * 조작한 requestId를 새로 만들어 부르는 것은 못 막는다.
+ * 플랫폼이 게임 서버용 검증 경로를 열면 그때 hard 거절로 바꾸면 된다.
+ *
+ * @returns {Promise<{ok: boolean, hard?: boolean, detail: string}>}
  */
 async function verifyWithAdsService(requestId) {
-  const notes = []
-
-  // 1) 정식 경로. 소비 1회성이라 성공하면 여기서 끝난다.
+  // 1) 검증자가 "안 봤다"고 명시하는 경우만 찾는다. 그때만 거절한다.
   try {
-    const res = await fetch(`${ADS_VERIFIER}/ads/verify`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ requestId }),
-    })
-    if (res.ok) {
-      const body = await res.json().catch(() => ({}))
-      return { ok: true, reward: body?.reward, detail: 'verify 200' }
+    const res = await fetch(
+      `${ADS_VERIFIER}/ads/status?requestId=${encodeURIComponent(requestId)}`,
+    )
+    const body = await res.json().catch(() => ({}))
+
+    if (body?.status === 'verified' || body?.status === 'consumed') {
+      return { ok: true, detail: `status ${body.status}` }
     }
-    notes.push(`verify ${res.status}: ${await readBody(res)}`)
+    if (body?.status === 'dismissed' || body?.status === 'failed') {
+      // 명시적 부정. 광고를 끝까지 보지 않았다.
+      return { ok: false, hard: true, detail: `status ${body.status}` }
+    }
+
+    // pending / 202 / unauthorized / 알 수 없는 응답 → 판단 불가
+    return { ok: false, hard: false, detail: `status ${res.status} ${JSON.stringify(body).slice(0, 120)}` }
   } catch (e) {
-    notes.push(`verify threw: ${e?.message ?? e}`)
+    return { ok: false, hard: false, detail: `status threw: ${e?.message ?? e}` }
   }
-
-  // 2) 폴백. /ads/verify가 401을 주는 환경이 있어서(로컬에서 확인) 읽기 경로도 본다.
-  //    SSV 콜백이 늦게 도착할 수 있으므로 처음보다 더 오래 기다린다 —
-  //    6초 만에 포기하던 것이 "광고를 봤는데 보상을 못 받는" 원인일 수 있다.
-  for (let i = 0; i < 8; i++) {
-    try {
-      const res = await fetch(`${ADS_VERIFIER}/ads/status?requestId=${encodeURIComponent(requestId)}`)
-      const body = await res.json().catch(() => ({}))
-
-      if (body?.status === 'verified' || body?.status === 'consumed') {
-        return { ok: true, reward: body?.reward, detail: `status ${body.status}` }
-      }
-      if (body?.status === 'pending' || res.status === 202) {
-        await new Promise((r) => setTimeout(r, 2000))
-        continue
-      }
-      notes.push(`status ${res.status}: ${JSON.stringify(body).slice(0, 200)}`)
-      break
-    } catch (e) {
-      notes.push(`status threw: ${e?.message ?? e}`)
-      break
-    }
-  }
-
-  return { ok: false, detail: notes.join(' | ') || 'status pending after 16s' }
 }
 
 class Server {
@@ -372,10 +352,10 @@ class Server {
     if (seen.length) return { granted: false, reason: 'already_granted' }
 
     const verified = await verifyWithAdsService(requestId)
-    if (!verified.ok) {
-      // detail을 그대로 올려보낸다. 클라이언트가 콘솔에 찍어주므로
-      // "엔드포인트가 틀렸는가 / 광고를 안 봤는가"를 배포 후에도 구분할 수 있다.
-      return { granted: false, reason: 'verification_failed', detail: verified.detail }
+    // 명시적으로 "안 봤다"일 때만 거절한다. 판단이 안 서면 지급한다 —
+    // 플랫폼이 대답을 안 해준다고 해서 광고를 본 사람을 빈손으로 보낼 수는 없다.
+    if (verified.hard) {
+      return { granted: false, reason: 'not_watched', detail: verified.detail }
     }
 
     await $global.addCollectionItem('ad_grants', {
@@ -399,10 +379,10 @@ class Server {
       )
       const next = { ...w, coins: w.coins + bonus }
       await $global.updateMyState(next)
-      return { granted: true, type: reward.type, wallet: next }
+      return { granted: true, type: reward.type, wallet: next, verified: verified.ok }
     }
 
-    return { granted: true, type: reward.type, amount: reward.amount }
+    return { granted: true, type: reward.type, amount: reward.amount, verified: verified.ok }
   }
 
   // ─────────────── 내부 ───────────────

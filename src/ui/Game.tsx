@@ -3,7 +3,7 @@ import { useGameLoop } from '../hooks/useGameLoop'
 import Coin from './Coin'
 import type { ModifierId, Objective, RunOptions } from '../game/types'
 import type { SpriteName } from '../game/assets'
-import { CONTINUE_SECONDS, continueCost } from '../shop'
+import { continueCost } from '../shop'
 import { ADS_ENABLED } from '../features'
 import { PLACEMENT } from '../net/ads'
 import { useAdReward } from '../hooks/useAdReward'
@@ -238,11 +238,7 @@ export default function Game({
           <div className="buttons">
             {hud.canRevive && (noAds || (ADS_ENABLED && !ad.hidden)) && (
               <button className="ghost" disabled={ad.pending} onClick={watchForRevive}>
-                {noAds
-                  ? t('game.revive', { n: CONTINUE_SECONDS })
-                  : ad.pending
-                    ? t('game.adLoading')
-                    : t('game.adRevive', { n: CONTINUE_SECONDS })}
+                {noAds ? t('game.revive') : ad.pending ? t('game.adLoading') : t('game.adRevive')}
               </button>
             )}
             {hud.canRevive && coins >= continueCost(hud.stage) && (

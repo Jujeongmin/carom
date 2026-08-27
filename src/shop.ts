@@ -94,7 +94,6 @@ export function continueCost(stage: number): number {
   return CONTINUE_BASE + Math.floor(Math.max(0, stage - 1) / 10) * 20
 }
 
-export const CONTINUE_SECONDS = 12
 
 /**
  * VX 상품(실제 결제) — **하나뿐이다**.

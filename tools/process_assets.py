@@ -6,7 +6,7 @@ OUT = ROOT / "public" / "assets"
 OUT.mkdir(parents=True, exist_ok=True)
 SRC = Path(r"C:\Users\anjsh\.codex\generated_images\01a0378c-e069-7523-8c4c-2396fc844f88")
 
-CHAR = SRC / "exec-08fa0639-c29a-4a6e-8974-299bf381f039.png"
+CHAR = SRC / "exec-0870608c-64fc-43aa-9a68-54f36e0481d1.png"
 ROCK = SRC / "exec-92ceaeaa-fb91-4d2a-9dae-23aeb1287023.png"
 METAL = SRC / "exec-c46ed8fd-2551-43b8-80ee-cc3038fc3b15.png"
 BG = SRC / "exec-f649be29-00e5-4d80-b3a6-e9661fc9e2e8.png"

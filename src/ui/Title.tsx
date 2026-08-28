@@ -1,16 +1,22 @@
 import type { Progress } from '../progress'
 import { t, useLang } from '../i18n'
 import Coin from './Coin'
-import LangSwitch from './LangSwitch'
 
 interface Props {
   progress: Progress
   onStart: (stage: number) => void
   onOpenRanking: () => void
   onOpenShop: () => void
+  onOpenSettings: () => void
 }
 
-export default function Title({ progress, onStart, onOpenRanking, onOpenShop }: Props) {
+export default function Title({
+  progress,
+  onStart,
+  onOpenRanking,
+  onOpenShop,
+  onOpenSettings,
+}: Props) {
   // 언어가 바뀌면 이 화면부터 다시 그려야 한다. t()는 값을 읽을 뿐 구독하지 않는다.
   useLang()
   const hasProgress = progress.reached > 1
@@ -48,9 +54,11 @@ export default function Title({ progress, onStart, onOpenRanking, onOpenShop }: 
             <img src="/assets/icon_rank.webp" alt="" />
             {t('title.rank')}
           </button>
+          <button className="menu" onClick={onOpenSettings}>
+            <img src="/assets/icon_settings.webp" alt="" />
+            {t('title.settings')}
+          </button>
         </div>
-
-        <LangSwitch />
       </div>
     </div>
   )

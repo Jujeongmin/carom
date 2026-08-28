@@ -16,8 +16,11 @@ export interface ArenaOptions {
   portals?: Portal[]
   /** 포탈 잠금 판정용 현재 시각(초) */
   now?: number
-  /** 포탈을 탔으면 true로 설정된다 */
-  out?: { warped: boolean; warpX: number; warpY: number }
+  /**
+   * 이 스텝에 일어난 일을 밖으로 알린다. **읽기 전용 출력**이라 시뮬레이션에는
+   * 영향을 주지 않는다 — 소리를 내려고 물리를 바꾸면 조준선이 어긋난다.
+   */
+  out?: { warped: boolean; warpX: number; warpY: number; bounced: boolean }
 }
 
 export function advanceArena(
@@ -28,7 +31,10 @@ export function advanceArena(
 ) {
   const playerContacts = opts.contacts
   if (playerContacts) playerContacts.length = 0
-  if (opts.out) opts.out.warped = false
+  if (opts.out) {
+    opts.out.warped = false
+    opts.out.bounced = false
+  }
 
   for (let i = 0; i < bodies.length; i++) {
     const b = bodies[i]
@@ -64,7 +70,7 @@ export function advanceArena(
 
     // 큐볼은 다른 공을 통과하지 않는다. 이 해소가 없으면 당구가 아니라 유령이 된다.
     resolvePlayerCollisions(player, bodies, playerContacts)
-    bouncePlayerOffWalls(player)
+    if (bouncePlayerOffWalls(player) && opts.out) opts.out.bounced = true
 
     // 포탈은 물리 단계에서 처리한다. 그래야 조준선이 공짜로 포탈을 반영한다.
     if (opts.portals?.length) applyPortals(player, opts.portals, opts.now ?? 0, opts.out)
@@ -156,22 +162,29 @@ function bounceOffWalls(b: Body) {
   }
 }
 
-function bouncePlayerOffWalls(p: Player) {
+/** @returns 이 스텝에 벽을 맞았는가. 반환값은 소리용이고 물리는 그대로다. */
+function bouncePlayerOffWalls(p: Player): boolean {
   const e = PLAYER.wallRestitution
+  let hit = false
   if (p.x - p.r < 0) {
     p.x = p.r
     p.vx = Math.abs(p.vx) * e
+    hit = true
   } else if (p.x + p.r > VIEW.w) {
     p.x = VIEW.w - p.r
     p.vx = -Math.abs(p.vx) * e
+    hit = true
   }
   if (p.y - p.r < 0) {
     p.y = p.r
     p.vy = Math.abs(p.vy) * e
+    hit = true
   } else if (p.y + p.r > VIEW.h) {
     p.y = VIEW.h - p.r
     p.vy = -Math.abs(p.vy) * e
+    hit = true
   }
+  return hit
 }
 
 function resolveBodyCollisions(bodies: Body[]) {

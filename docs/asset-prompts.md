@@ -106,7 +106,7 @@ All three must be identical in shape and differ ONLY in color.
 |---|---|
 | `char_base.png` | 좌 (시안) |
 | `char_skin_pulse.png` | 중 (바이올렛) |
-| `char_skin_ember.png` | 우 (에메랄드) |
+| `char_skin_ember.png` | 우 (에메랄드) — 상점 표기는 JADE, 파일명·id는 그대로 |
 
 > ⚠️ **3번은 원래 앰버(#ffa14d)였고, 그게 폭탄과 똑같이 생겼다.**
 > 폭탄 프롬프트(GEN-3)가 "둥근 금속 통 + 빛나는 주황 코어 + 주황 #ff8c3c"라

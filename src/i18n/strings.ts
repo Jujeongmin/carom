@@ -46,6 +46,13 @@ export const STRINGS = {
   'title.start': { ko: '시작', en: 'Start', 'zh-Hans': '开始', 'zh-Hant': '開始' },
   'title.shop': { ko: '상점', en: 'Shop', 'zh-Hans': '商店', 'zh-Hant': '商店' },
   'title.rank': { ko: '랭킹', en: 'Ranking', 'zh-Hans': '排行榜', 'zh-Hant': '排行榜' },
+  'title.settings': { ko: '설정', en: 'Settings', 'zh-Hans': '设置', 'zh-Hant': '設定' },
+
+  // ─── 설정 ───
+  'settings.title': { ko: 'SETTINGS', en: 'SETTINGS', 'zh-Hans': 'SETTINGS', 'zh-Hant': 'SETTINGS' },
+  'settings.music': { ko: '배경음', en: 'Music', 'zh-Hans': '背景音乐', 'zh-Hant': '背景音樂' },
+  'settings.sfx': { ko: '효과음', en: 'Sound effects', 'zh-Hans': '音效', 'zh-Hant': '音效' },
+  'settings.lang': { ko: '언어', en: 'Language', 'zh-Hans': '语言', 'zh-Hant': '語言' },
 
   // ─── 목표 ───
   'obj.noNeutral': {
@@ -296,10 +303,10 @@ export const STRINGS = {
     'zh-Hant': '僅外觀 · 紫羅蘭',
   },
   'skin.ember.note': {
-    ko: '외형만 바뀜 · 앰버',
-    en: 'Looks only · amber',
-    'zh-Hans': '仅外观 · 琥珀',
-    'zh-Hant': '僅外觀 · 琥珀',
+    ko: '외형만 바뀜 · 에메랄드',
+    en: 'Looks only · emerald',
+    'zh-Hans': '仅外观 · 翡翠绿',
+    'zh-Hant': '僅外觀 · 翡翠綠',
   },
   'vx.noAds.grants': {
     ko: '광고 제거 · 모든 클리어 코인 2배 (영구)',

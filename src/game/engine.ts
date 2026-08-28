@@ -17,7 +17,7 @@ import type { GameState, Input, RunOptions } from './types'
 
 /** 한 스텝 안에서만 쓰는 스크래치 버퍼. 매 스텝 비워진다. */
 const contactScratch: number[] = []
-const warpScratch = { warped: false, warpX: 0, warpY: 0 }
+const warpScratch = { warped: false, warpX: 0, warpY: 0, bounced: false }
 
 export function createStage(stageIndex: number, seed: number, opts: RunOptions): GameState {
   const spec = stageSpec(stageIndex)
@@ -53,6 +53,20 @@ export function createStage(stageIndex: number, seed: number, opts: RunOptions):
 
 export function trackOf(s: GameState): 'classic' | 'unlimited' {
   return s.usedRevive || s.usedConsumable ? 'unlimited' : 'classic'
+}
+
+/**
+ * 마지막 step에서 큐볼이 실제로 부딪힌 물체 수.
+ * 소리를 내려고 물리를 다시 돌릴 수는 없어서 이미 계산된 접촉을 그대로 보여준다.
+ * **읽기 전용**이다 — 이 값을 보고 상태를 바꾸면 조준선과 실제가 갈라진다.
+ */
+export function lastContactCount(): number {
+  return contactScratch.length
+}
+
+/** 마지막 step에서 큐볼이 벽을 맞았는가. 위와 같은 이유로 읽기 전용이다. */
+export function lastBounced(): boolean {
+  return warpScratch.bounced
 }
 
 export function step(state: GameState, dt: number, inputs: Input[]): GameState {

@@ -37,7 +37,7 @@ export function predict(
   const steps = Math.round(horizonSec / PHYSICS.dt)
   const path: { x: number; y: number }[] = [{ x: p.x, y: p.y }]
   const contacts: number[] = []
-  const warp = { warped: false, warpX: 0, warpY: 0 }
+  const warp = { warped: false, warpX: 0, warpY: 0, bounced: false }
   const maxBounces = Math.max(0, maxSegments - 1)
   let bounces = 0
   let pathClosed = false

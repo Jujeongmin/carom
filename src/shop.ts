@@ -54,8 +54,13 @@ export const SKINS: Skin[] = [
     noteKey: 'skin.pulse.note',
   },
   {
+    /*
+      id는 'ember'로 둔다. 색이 바뀌었다고 id를 바꾸면 서버 지갑의 owned 배열과
+      SKIN_PRICES 키가 어긋나서, 이미 산 사람이 스킨을 잃는다.
+      보이는 이름만 바꾼다.
+    */
     id: 'ember',
-    name: 'EMBER',
+    name: 'JADE',
     sprite: 'char_skin_ember',
     price: 700,
     noteKey: 'skin.ember.note',

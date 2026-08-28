@@ -761,3 +761,85 @@ button.lang:active {
   font-weight: 900;
   letter-spacing: 0.04em;
 }
+
+/* ─────────────── 설정 ─────────────── */
+
+.setting {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setting-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 13px;
+  color: rgba(232, 236, 245, 0.75);
+}
+
+.setting-row em {
+  font-family: var(--font-display);
+  font-style: normal;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--cyan);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+  슬라이더. 기본 모양은 브라우저마다 달라서 게임 톤과 안 맞는다.
+  트랙과 손잡이를 직접 그린다.
+*/
+.setting input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 22px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.setting input[type='range']::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(232, 236, 245, 0.14);
+}
+
+.setting input[type='range']::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(232, 236, 245, 0.14);
+}
+
+/* 손잡이는 손가락으로 잡을 만해야 한다. 모바일 세로 게임이라 특히. */
+.setting input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #6ae9ff 0%, #2bc8ee 100%);
+  border: 1px solid rgba(180, 245, 255, 0.9);
+  box-shadow: 0 0 12px rgba(77, 225, 255, 0.5);
+}
+
+.setting input[type='range']::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #6ae9ff 0%, #2bc8ee 100%);
+  border: 1px solid rgba(180, 245, 255, 0.9);
+  box-shadow: 0 0 12px rgba(77, 225, 255, 0.5);
+}
+
+/* 설정 안에서는 언어 버튼이 한 줄에 다 들어가야 한다 */
+.setting .lang-switch {
+  margin-top: 0;
+  justify-content: space-between;
+}
+
+.setting .lang-switch button.lang {
+  flex: 1;
+}

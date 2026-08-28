@@ -1,10 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { loadAllAssets, type SpriteName } from '../game/assets'
 import { PHYSICS } from '../game/config'
-import { createStage, revive as reviveStage, step, trackOf } from '../game/engine'
+import {
+  createStage,
+  lastBounced,
+  lastContactCount,
+  revive as reviveStage,
+  step,
+  trackOf,
+} from '../game/engine'
 import { predict } from '../game/foresight'
 import { FX_SEC, computeViewport, draw, screenToWorld, type ActiveFx } from '../game/renderer'
 import { shotFrom } from '../game/shot'
+import { playSfx, resetSfxFrame, unlockAudio } from '../audio'
 import type {
   BodyRole,
   GameState,
@@ -157,6 +165,8 @@ export function useGameLoop(
     const active = { id: -1 }
 
     const onDown = (e: PointerEvent) => {
+      // 브라우저는 제스처 안에서만 오디오를 켜준다. 캔버스를 누르는 이 순간이 그 자리다.
+      unlockAudio()
       const s = stateRef.current
       if (!s || s.phase !== 'playing') return
       active.id = e.pointerId
@@ -204,13 +214,38 @@ export function useGameLoop(
       }
 
       let steps = 0
+      resetSfxFrame()
+      const phaseBefore = s.phase
+      // 한 프레임에 스텝이 여러 번 돌 수 있다. 스크래치는 스텝마다 덮이므로
+      // 루프가 끝난 뒤에 읽으면 중간에 일어난 접촉을 놓친다.
+      let touched = false
+      let bounced = false
       while (acc >= PHYSICS.dt && steps < PHYSICS.maxStepsPerFrame) {
         const q = inputsRef.current
         step(s, PHYSICS.dt, q)
+        if (lastContactCount() > 0) touched = true
+        if (lastBounced()) bounced = true
         if (q.length) q.length = 0
-        for (const e of s.fx) effects.push({ ...e, at: s.time })
+        for (const e of s.fx) {
+          effects.push({ ...e, at: s.time })
+          // 소리는 렌더러와 같은 이벤트 흐름에서 낸다. 판단을 두 곳에 두면
+          // 화면과 소리가 어긋나기 시작한다.
+          if (e.kind === 'dash') playSfx('shot')
+          else if (e.kind === 'warp') playSfx('warp')
+          else if (e.kind === 'destroy') playSfx('destroy')
+          else if (e.kind === 'chain') playSfx('chain', { depth: e.depth })
+          else if (e.kind === 'explode') playSfx('explode')
+        }
         acc -= PHYSICS.dt
         steps++
+      }
+
+      // 접촉음. 당구 게임이라 이게 없으면 손맛이 통째로 사라진다.
+      // 프레임당 한 번씩만 낸다 — 스텝마다 내면 스치는 접촉에서 소리가 갈린다.
+      if (touched) playSfx('hitBody')
+      if (bounced) playSfx('hitWall')
+      if (phaseBefore === 'playing' && s.phase !== 'playing') {
+        playSfx(s.phase === 'cleared' ? 'clear' : 'fail')
       }
       if (steps === PHYSICS.maxStepsPerFrame) acc = 0
 

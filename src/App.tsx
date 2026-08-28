@@ -3,13 +3,14 @@ import './app.css'
 import Game from './ui/Game'
 import Leaderboard from './ui/Leaderboard'
 import Shop from './ui/Shop'
+import Settings from './ui/Settings'
 import Title from './ui/Title'
 import { useRanking } from './hooks/useRanking'
 import { useWallet } from './hooks/useWallet'
 import { skinById } from './shop'
 
 type Screen = { kind: 'title' } | { kind: 'game'; startStage: number }
-type Modal = { kind: 'shop' } | { kind: 'rank' }
+type Modal = { kind: 'shop' } | { kind: 'rank' } | { kind: 'settings' }
 
 export default function App() {
   const { wallet, online, recordClear, spend, buySkin, equipSkin, applyServerWallet, refresh } =
@@ -49,6 +50,7 @@ export default function App() {
           onStart={(stage) => setScreen({ kind: 'game', startStage: stage })}
           onOpenShop={() => setModal({ kind: 'shop' })}
           onOpenRanking={() => setModal({ kind: 'rank' })}
+          onOpenSettings={() => setModal({ kind: 'settings' })}
         />
       ) : (
         <Game
@@ -77,6 +79,8 @@ export default function App() {
           onClose={() => setModal(null)}
         />
       )}
+
+      {modal?.kind === 'settings' && <Settings onClose={() => setModal(null)} />}
 
       {modal?.kind === 'rank' && (
         <Leaderboard

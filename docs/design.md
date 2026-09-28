@@ -109,17 +109,30 @@
     ├── game/
     │   ├── config.ts          # 튜닝 숫자 전부 여기 한 곳
     │   ├── types.ts
+    │   ├── rng.ts             # 시드 기반 난수
     │   ├── engine.ts          # 시뮬레이션 (결정적)
     │   ├── physics.ts         # 원-원 충돌, 벽, 포탈
     │   ├── rules.ts           # 파괴·폭발·연쇄 규칙의 유일한 구현
     │   ├── foresight.ts       # 조준선
     │   ├── shot.ts            # 당김 → 임펄스 변환
     │   ├── stage.ts           # 번호 → 스테이지
+    │   ├── assets.ts          # 알파 바운딩박스 기준 스프라이트 정규화
     │   └── renderer.ts        # Canvas 2D (읽기 전용)
-    ├── hooks/useGameLoop.ts   # rAF + 고정 timestep
-    ├── net/leaderboard.ts     # 서버 호출
-    ├── progress.ts            # 진행 저장
-    └── ui/                    # Title / Game / Leaderboard
+    ├── audio/                 # 배경음·효과음 (파일 없이 합성)
+    ├── hooks/
+    │   ├── useGameLoop.ts     # rAF + 고정 timestep
+    │   ├── useWallet.ts       # 서버 지갑 · 오프라인 폴백
+    │   ├── useRanking.ts      # 랭킹 자동 등록
+    │   └── useAdReward.ts     # 광고 보상 1회 수령
+    ├── net/
+    │   ├── leaderboard.ts     # 서버 호출
+    │   └── ads.ts             # Verse8 Ads 래퍼
+    ├── i18n/                  # 한국어 · English · 简体 · 繁體
+    ├── shop.ts                # 코인 상점 (가격은 server.js가 정본)
+    ├── progress.ts            # 진행 저장 (오프라인 전용)
+    ├── tutorial.ts            # 튜토리얼 열람 여부 (로컬)
+    ├── features.ts            # 미구현 기능 스위치
+    └── ui/                    # Title / Game / Leaderboard / Shop / Settings / Tutorial
 ```
 
 ### 지켜야 하는 경계 세 개
@@ -257,8 +270,12 @@ Verse8은 SSV 결과를 **게임 서버에 열어주지 않는다.**
 
 남용은 가격이 아니라 **스테이지당 1회 제한**(`hud.canRevive`, 광고 부활과 공유)이 막는다.
 
-**스킨 = PULSE 200 · EMBER 700** (`src/shop.ts`와 `server.js`의 `SKIN_PRICES`가 같아야 한다.
+**스킨 = PULSE 200 · JADE 700** (`src/shop.ts`와 `server.js`의 `SKIN_PRICES`가 같아야 한다.
 차감은 서버 표가 하므로 어긋나면 화면 값과 실제 값이 달라진다.)
+
+JADE는 원래 EMBER(주황)였는데 폭발통과 똑같이 생겨서 색을 바꿨다. **`id`는 `ember`로 둔다** —
+색이 바뀌었다고 `id`를 바꾸면 서버 지갑의 `owned` 배열과 `SKIN_PRICES` 키가 어긋나
+이미 산 사람이 스킨을 잃는다. 보이는 이름만 바꾼다.
 
 `npm run sim`의 "가격별 도달 스테이지":
 
@@ -322,9 +339,35 @@ Verse8은 SSV 결과를 **게임 서버에 열어주지 않는다.**
 
 ---
 
-## 9. 아직 없는 것
+## 9. 사운드 · 튜토리얼
 
-사운드, 튜토리얼, 클리어/실패 연출.
+### 소리는 파일이 아니라 합성이다
+
+루프 파일을 쓰면 몇 MB가 붙고, 짧게 자르면 반복이 금방 들킨다. 스테이지를 번호 하나에서
+만들어내는 게임에 고정 길이 오디오를 붙이는 것도 어울리지 않는다. 전부 Web Audio로 그 자리에서 만든다.
+
+| 파일 | 역할 |
+|---|---|
+| `audio/engine.ts` | 합성 노드와 출력 |
+| `audio/music.ts` | 배경음 |
+| `audio/sfx.ts` | 효과음 |
+| `audio/index.ts` | 공개 API |
+
+**당구 게임이라 접촉음이 제일 중요하다.** 공이 닿았는데 소리가 없으면 맞은 건지 스친 건지 알 수 없다.
+음량은 설정에서 따로 조절한다.
+
+### 튜토리얼은 첫 판에만
+
+`tutorial.ts`가 열람 여부를 **로컬에만** 저장한다. 재화가 아니라 화면 설정이고,
+저장이 날아가서 한 번 더 보는 것이 못 보는 것보다 낫다.
+
+내용은 세 가지 — 당겼다 떼면 발사 / 선은 결과를 미리 보여준다 / 금색 물체를 전부 부수면 클리어.
+여기에 조준선 색 범례(빗나감 · 부순다 · 폭발 연쇄 · 여기서 실패)를 같이 띄운다.
+**색이 곧 판정인데 그 색을 안 알려주면 조준선이 그냥 장식으로 보인다.**
+
+### 아직 없는 것
+
+클리어 / 실패 연출. 현재는 텍스트 오버레이만 띄운다.
 
 ---
 

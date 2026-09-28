@@ -1,12 +1,55 @@
-# Requirements — basic-vite-react
+# Requirements — CAROM
 
-## Coding Patterns
+## 코딩 패턴
 
-- Function components with hooks; no class components.
-- Style via Tailwind utility classes in JSX; keep custom CSS minimal and scoped (`App.css` for component, `index.css` for globals/Tailwind directives).
-- Register new image/asset URLs under `src/assets.json` rather than hardcoding.
+- 함수 컴포넌트 + 훅만 쓴다. 클래스 컴포넌트 없음.
+- 스타일은 순수 CSS. 전역 토큰과 리셋은 `src/index.css`, 화면 스타일은 `src/app.css`. **Tailwind를 쓰지 않는다** — 설치돼 있지도 않다.
+- 게임 로직은 React 밖에 둔다. `src/game/*`는 DOM도 React도 모르는 순수 TS다. React는 화면 전환·모달·HUD만 담당한다.
+- 튜닝 숫자는 `src/game/config.ts`에 모은다. 컴포넌트나 엔진 안에 상수를 박지 않는다.
+- 사용자에게 보이는 문자열은 `src/i18n/strings.ts`에 키로 넣고 `t()`로 꺼낸다. 하드코딩하지 않는다.
+- 스프라이트는 `src/game/assets.ts`의 `NAMES`에 등록한다. 로드 시 알파 바운딩박스를 재서 지름 2r에 맞추므로, 에셋을 다시 뽑아도 코드를 고칠 필요가 없다.
 
-## Known Issues / Constraints
+## 깨뜨리면 안 되는 것
 
-- Baseline template — no routing, no state management library, no networking layer wired up.
-- `@agent8/gameserver` and `lucide-react` are installed but not imported anywhere.
+### 결정성
+
+`game/*`의 시뮬레이션 경로에 비결정적 요소를 넣지 않는다.
+
+- 난수는 `game/rng.ts`(시드 기반)만. `Math.random()`은 새 판 시드를 뽑을 때만.
+- `Date.now()`, `performance.now()`를 시뮬레이션 안에서 읽지 않는다. 시간은 고정 timestep으로 전달받는다.
+- 반복 순서가 결과에 영향을 주는 곳에서 `Set`/`Map`의 순회 순서에 기대지 않는다.
+
+조준선이 같은 엔진을 복제해 돌리기 때문에, 이게 깨지면 화면에 보여준 궤적과 실제 결과가 갈라진다.
+
+### 규칙의 단일 구현
+
+파괴·폭발·연쇄 판정은 `game/rules.ts`에만 있다. 엔진과 조준선이 같은 함수를 부른다. 조준선 쪽에 "비슷한" 로직을 새로 쓰지 않는다.
+
+`resolveRules`는 조준선도 함께 쓰는 코드다. **부작용(코인 적립 등)을 넣으면 안 된다** — 아직 쏘지도 않은 예측이 코인을 센다. 클리어 보상은 `engine.step`에서만 준다.
+
+### 렌더러의 방향
+
+`game/renderer.ts`는 상태를 읽기만 한다. 그리는 김에 상태를 고치지 않는다.
+
+### 서버 권위
+
+- 스킨 가격은 `server.js`의 `SKIN_PRICES`가 정한다. 클라이언트가 보낸 가격을 받지 않는다. `src/shop.ts`의 값과 **반드시 같아야 한다** — 어긋나면 화면 값과 실제 차감이 달라진다.
+- 스킨 `id`는 바꾸지 않는다. 표시 이름만 바꾼다(예: `ember`의 표시명이 JADE로 바뀜). `id`를 바꾸면 서버 지갑의 `owned` 배열과 `SKIN_PRICES` 키가 어긋나 이미 산 사람이 스킨을 잃는다.
+- VX 상품 지급은 `$onItemPurchased`만 한다. 같은 `purchaseId`는 한 번만 반영한다.
+
+### 광고
+
+- 사용자 제스처(onClick) 밖에서 광고를 부르는 코드 경로를 만들지 않는다. 자동 표시는 정책 위반이다.
+- `status`가 `rewarded`일 때만 보상한다. `dismissed` · `failed`는 아무 일도 없다.
+- 환경이 광고를 지원하지 않으면 버튼을 **숨긴다**. 눌러도 매번 실패하는 버튼이 남아 있는 것이 가장 나쁘다.
+- 검증 실패와 검증 불가를 구분한다. 명시적 부정일 때만 거절하고, 대답을 못 얻으면 지급한다.
+
+### 미구현 기능
+
+구현되지 않은 것은 눌리지 않아야 한다. `src/features.ts`의 스위치로 막는다 — 자리만 잡아두는 것과 공짜로 주는 것은 완전히 다른 결과를 만든다.
+
+## 알려진 제약
+
+- **도달 스테이지 위조를 막지 못한다.** 클라이언트가 부풀려 보내면 서버가 판별할 수 없다. 완전히 막으려면 서버가 시뮬레이션을 재현해야 하는데 범위 밖이다.
+- **광고 시청의 서버 검증 경로가 없다.** Verse8이 SSV 결과를 게임 서버에 열어주지 않는다(`/ads/verify` → `401`, `/ads/status` → `202` pending). (계정, `requestId`) 기록과 스테이지당 상한(`MAX_COINS_PER_STAGE = 200`)만으로 남용을 제한한다.
+- **오프라인 진행은 기기에 남는다.** 서버에 연결되지 않으면 로컬로 돌아가고, 처음 연결될 때 `migrateLocal`로 한 번만 올라간다.

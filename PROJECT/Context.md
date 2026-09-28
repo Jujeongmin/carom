@@ -1,19 +1,55 @@
-# Context — basic-vite-react
+# Context — CAROM
 
-## Project Overview
+## 개요
 
-Minimal React + TypeScript scaffold built with Vite and Tailwind CSS. `App.tsx` renders a single counter button wired to `useState`; `main.tsx` mounts it with `createRoot` under `StrictMode`. No 3D, no game engine, no networking — this is the baseline that every other template in the repo is derived from.
+세로 9:16 모바일 2D 당구 퍼즐. 한 손 조작. Verse8 배포.
 
-## Tech Stack
+닫힌 아레나에서 큐볼과 공들이 계속 움직인다. 화면을 누르고 반대로 당겼다 떼서 발사한다(새총). 타깃을 전부 부수면 클리어, 위험물에 닿거나 시간이 다하면 실패. 샷 횟수 제한은 없다.
 
-_Exact versions are in `package.json`._
+게임 프레임워크 없이 Canvas 2D에 직접 그린다. 원 20개짜리 물리에 프레임워크를 얹으면 의존성 리스크만 늘고 얻는 게 없다.
 
-- **Framework**: React, React DOM
-- **Build / Lang**: Vite, TypeScript
-- **Styling**: Tailwind CSS, PostCSS (autoprefixer)
-- **Icons**: `lucide-react`
-- **Multiplayer (unwired)**: `@agent8/gameserver`
+전체 설계와 그 근거는 [`docs/design.md`](../docs/design.md)에 있다. 이 문서는 요약이다.
 
-## Critical Memory
+## 스택
 
-No template-specific runtime invariants. Standard React + Vite conventions apply.
+_정확한 버전은 `package.json`._
+
+- **빌드 / 언어**: Vite, TypeScript
+- **UI**: React, React DOM (화면 전환·모달·HUD만. 게임 본체는 Canvas)
+- **렌더**: Canvas 2D 직접 호출. 렌더 라이브러리 없음
+- **스타일**: 순수 CSS + 커스텀 프로퍼티 (`src/index.css`, `src/app.css`). **Tailwind 쓰지 않음**
+- **서버**: `@agent8/gameserver` — 루트 `server.js`
+- **플랫폼**: `@verse8/ads`(보상형 광고), `@verse8/platform`(VX 결제)
+- **에셋 파이프라인**: `sharp`(Node), `tools/*.py`
+
+## 반드시 지켜야 하는 런타임 불변식
+
+이 셋 중 하나라도 깨지면 조준선이 거짓말을 시작한다. 조준선이 이 게임의 핵심이므로 곧 게임이 망가지는 것과 같다.
+
+### 1. 시뮬레이션은 결정적이다
+
+같은 시드 + 같은 입력열 → 같은 결과.
+
+조준선(`foresight.ts`)은 현재 상태를 복제해 같은 엔진으로 빨리 감아 그린다. 비결정성이 섞이는 순간 보여준 궤적과 실제 결과가 갈라진다.
+
+- 난수는 시드 기반(`game/rng.ts`)만 쓴다
+- `Math.random()`은 **새 판을 시작할 때만** 쓴다
+- 루프는 고정 timestep **1/60**. 가변 timestep을 쓰면 프레임 드랍마다 결과가 달라진다
+
+### 2. 규칙 구현은 `game/rules.ts` 하나뿐이다
+
+파괴·폭발·연쇄 판정은 엔진과 조준선이 **같은 함수**를 호출한다. 규칙이 두 벌이 되는 순간 조준선이 거짓말한다 — 실제로 그 사고를 냈다(금색 타깃이 안 부서지던 버그).
+
+관련 주의: 클리어 코인 보상은 `engine.step`에서만 준다. `resolveRules`는 조준선도 함께 쓰는 코드라 거기에 넣으면 아직 쏘지도 않은 예측이 코인을 센다.
+
+### 3. `game/renderer.ts`는 상태를 읽고 그리기만 한다
+
+상태를 쓰지 않는다. 그래서 아트를 교체해도 물리에 닿을 수 없다.
+
+## 그 밖의 중요한 결정
+
+- **접촉 판정은 물리가 해소한 충돌 목록으로만 한다.** 충돌 해소가 두 원을 정확히 맞닿는 거리로 밀어내므로, 그 뒤에 겹침을 재면 경계값에서 부동소수점에 따라 참/거짓이 갈린다.
+- **튜닝 숫자는 `game/config.ts` 한 곳에 모은다.**
+- **재화는 서버가 소유한다.** localStorage는 고치면 그만이다. 가격표는 서버(`server.js`의 `SKIN_PRICES`)가 정하고, 클라이언트가 보낸 가격은 받지 않는다. `src/shop.ts`의 값과 어긋나면 화면 값과 실제 차감이 달라진다.
+- **광고는 사용자 제스처에서만 호출한다.** 자동 표시는 정책 위반이라, onClick 밖에서 부르는 코드 경로를 아예 만들지 않는다.
+- **구현되지 않은 기능은 눌리지 않아야 한다.** `src/features.ts`의 스위치로 막는다 — 자리만 잡아두는 것과 공짜로 주는 것은 완전히 다른 결과를 만든다.
